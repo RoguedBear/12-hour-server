@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# TODO: add tails -f log.log or less -R +F log.log in the readme
+# TODO: add code style badge in README
 import colorama
 import requests
 import logging
@@ -49,13 +51,72 @@ def config_loader(filename: str = "config.yaml") -> dict:
     with open("config.yaml") as config_file:
         config = yaml.safe_load(config_file)
 
-    global SSID, NIGHT_PHASE, MORNING_PHASE
+    global SSID, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
+    # try and load each of the important stuff
+    # Wifi
     try:
         SSID = config["ssid"]
     except KeyError:
         logger.exception("SSID value not provided in config file!")
+        quit(1)
     else:
         logger.info(f'WiFi SSID "{SSID}" loaded...')
+
+    # night phase timing
+    try:
+        NIGHT_PHASE = config["night phase"]
+        assert 'start time' in NIGHT_PHASE, "`start time` value missing in config file"
+        assert 'end time' in NIGHT_PHASE, "`end time` value missing in config file"
+    except KeyError:
+        logger.exception("`night phase` value not provided in config file!")
+        quit(1)
+    except AssertionError:
+        logger.exception("Values for `night phase` are missing in config file!")
+        quit(1)
+    else:
+        logger.info(f'Night Phase and it\'s timings loaded...')
+
+    # morning phase timing
+    try:
+        MORNING_PHASE = config["morning phase"]
+        assert 'start time' in MORNING_PHASE, "`start time` value missing in config file"
+        assert 'end time' in MORNING_PHASE, "`end time` value missing in config file"
+    except KeyError:
+        logger.exception("`morning phase` value not provided in config file!")
+        quit(1)
+    except AssertionError:
+        logger.exception("Values for `morning phase` are missing in config file!")
+        quit(1)
+    else:
+        logger.info(f'Morning Phase and it\'s timings loaded...')
+
+    # try loading Telegram bot token
+    try:
+        telegram = config["telegram"]
+        assert "BOT_TOKEN" in telegram, "BOT_Token key in `telegram` not provided!"
+        assert "CHAT_ID" in telegram, "CHAT_ID in `telegram` not provided!"
+    except KeyError:
+        logger.info("Telegram tokens not found. Moving over...")
+        quit(1)
+    except AssertionError as e:
+        logger.exception(e)
+        quit(1)
+    else:
+        BOT_TOKEN = telegram["BOT_TOKEN"]
+        CHAT_ID = telegram["CHAT_ID"]
+        logger.info("Telegram bot_token and chat id loaded...")
+
+    try:
+        TIMEOUT = config['timeout']
+        assert isinstance(TIMEOUT, int) is True, f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
+    except KeyError:
+        logger.debug("timeout key not found. will use default")
+    except AssertionError as e:
+        logger.exception(e)
+        quit(1)
+    else:
+        logger.info(f"Custom TIMEOUT({TIMEOUT} seconds) loaded...")
+
 
 
 def alert_onTelegram(message: str):
@@ -72,7 +133,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-            "&text=" + message[:1000]
+              "&text=" + message[:1000]
         )
 
 
@@ -126,7 +187,8 @@ oooooooooooo                                       .    o8o
 o888o         `V88V"V8P' o888o o888o `Y8bod8P'   "888" o888o `Y8bod8P' o888o o888o 8""888P'
 """
 
-def connected_to_wifi(ssid:str) -> bool:
+
+def connected_to_wifi(ssid: str) -> bool:
     """
     checks whether the device is connected to wifi using linux's nmcli command.
     Assumes, that the device automatically connects to `ssid` if `ssid` is in range.
@@ -140,5 +202,3 @@ def connected_to_wifi(ssid:str) -> bool:
 
 if __name__ == "__main__":
     config_loader()
-
-    # Test 1
