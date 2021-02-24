@@ -5,9 +5,9 @@ import logging
 from colorama import Fore
 
 # program constants
-CHAT_ID = ''
-BOT_TOKEN = ''
-SSID = ''
+CHAT_ID = ""
+BOT_TOKEN = ""
+SSID = ""
 NIGHT_PHASE = None
 MORNING_PHASE = None
 
@@ -21,8 +21,8 @@ FORMATTER = {
         "INFO": Fore.WHITE,
         "ERROR": Fore.RED,
         "WARNING": Fore.YELLOW,
-        "DEBUG": Fore.LIGHTWHITE_EX
-    }
+        "DEBUG": Fore.LIGHTWHITE_EX,
+    },
 }
 
 
@@ -37,7 +37,6 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-
 def config_loader(filename: str = "config.yaml") -> dict:
     """
     Loads the config from the `filename` and returns the dictionary from it and sets the program constants
@@ -45,12 +44,13 @@ def config_loader(filename: str = "config.yaml") -> dict:
     :return: dictionary
     """
     import yaml
-    with open('config.yaml') as config_file:
+
+    with open("config.yaml") as config_file:
         config = yaml.safe_load(config_file)
 
     global SSID, NIGHT_PHASE, MORNING_PHASE
     try:
-        SSID = config['ssid']
+        SSID = config["ssid"]
     except KeyError:
         logger.exception("SSID value not provided in config file!")
 
@@ -64,8 +64,13 @@ def alert_onTelegram(message: str):
     """
     if BOT_TOKEN and CHAT_ID:
         requests.get(
-            "https://api.telegram.org/bot" + BOT_TOKEN + "/sendMessage?chat_id=" + CHAT_ID + "&parse_mode=Markdown"
-                                                                                             "&text=" + message[:1000])
+            "https://api.telegram.org/bot"
+            + BOT_TOKEN
+            + "/sendMessage?chat_id="
+            + CHAT_ID
+            + "&parse_mode=Markdown"
+            "&text=" + message[:1000]
+        )
 
 
 # Initialise colorama
@@ -75,10 +80,10 @@ colorama.init(autoreset=True)
 
 logger = logging.getLogger(__name__)
 console = logging.StreamHandler()
-colors = ColoredFormatter(FORMATTER['format'], datefmt=FORMATTER['datefmt'], style="{")
+colors = ColoredFormatter(FORMATTER["format"], datefmt=FORMATTER["datefmt"], style="{")
 console.setFormatter(colors)
 logger.addHandler(console)
 logger.setLevel(10)
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger.info("hello")
     config_loader()
