@@ -13,7 +13,7 @@ MORNING_PHASE = None
 
 # Logging formatter
 FORMATTER = {
-    "format": "{color}[{asctime}] -- {levelname:>6s} -- {message}",
+    "format": "{color}[{asctime}] :--{levelname:-^9s}--: {message}",
     # "format": "[%(asctime)s] | %(levelname)-6s | [%(funcName)s()]: %(message)s",
     "datefmt": "%d/%b/%Y %H:%M:%S",
     "colors": {
@@ -53,6 +53,8 @@ def config_loader(filename: str = "config.yaml") -> dict:
         SSID = config["ssid"]
     except KeyError:
         logger.exception("SSID value not provided in config file!")
+    else:
+        logger.info(f"WiFi SSID \"{SSID}\" loaded...")
 
 
 def alert_onTelegram(message: str):
@@ -79,11 +81,48 @@ colorama.init(autoreset=True)
 # Starting program logger
 
 logger = logging.getLogger(__name__)
-console = logging.StreamHandler()
+
+# Color logs on screen
 colors = ColoredFormatter(FORMATTER["format"], datefmt=FORMATTER["datefmt"], style="{")
+console = logging.StreamHandler()
 console.setFormatter(colors)
+
+# File logs uncolored
+file_logs_uncolored = logging.FileHandler("logs.log")
+uncolored_formatter = logging.Formatter(FORMATTER["format"].replace("{color}",""), datefmt=FORMATTER["datefmt"], style="{")
+file_logs_uncolored.setFormatter(uncolored_formatter)
+
+# File logs colored
+file_logs_colored = logging.FileHandler("logs_color.log")
+file_logs_colored.setFormatter(colors)
+
+# Adding those handlers
 logger.addHandler(console)
+logger.addHandler(file_logs_colored)
+logger.addHandler(file_logs_uncolored)
+
 logger.setLevel(10)
+
+"""
+ooooo   ooooo           oooo                                                                
+`888'   `888'           `888                                                                
+ 888     888   .ooooo.   888  oo.ooooo.   .ooooo.  oooo d8b                                 
+ 888ooooo888  d88' `88b  888   888' `88b d88' `88b `888""8P                                 
+ 888     888  888ooo888  888   888   888 888ooo888  888                                     
+ 888     888  888    .o  888   888   888 888    .o  888                                     
+o888o   o888o `Y8bod8P' o888o  888bod8P' `Y8bod8P' d888b                                    
+                               888                                                          
+                              o888o                                                         
+                                                                                            
+oooooooooooo                                       .    o8o                                 
+`888'     `8                                     .o8    `"'                                 
+ 888         oooo  oooo  ooo. .oo.    .ooooo.  .o888oo oooo   .ooooo.  ooo. .oo.    .oooo.o 
+ 888oooo8    `888  `888  `888P"Y88b  d88' `"Y8   888   `888  d88' `88b `888P"Y88b  d88(  "8 
+ 888    "     888   888   888   888  888         888    888  888   888  888   888  `"Y88b.  
+ 888          888   888   888   888  888   .o8   888 .  888  888   888  888   888  o.  )88b 
+o888o         `V88V"V8P' o888o o888o `Y8bod8P'   "888" o888o `Y8bod8P' o888o o888o 8""888P'
+"""
+
+
 if __name__ == "__main__":
-    logger.info("hello")
     config_loader()
