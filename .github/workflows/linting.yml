@@ -1,0 +1,37 @@
+name: Lint
+
+on: push
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Install Python dependencies
+        run: pip install black flake8
+
+      - name: Run linters
+        uses: wearerequired/lint-action@v1
+        with:
+          github_token: ${{ secrets.LINTING_TOKEN }}
+          # Enable linters
+          black: true
+          auto_fix: true
+
+      - name: Trigger next workflow
+        if: always()
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.LINTING_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: trigger-lint-check
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'

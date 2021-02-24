@@ -1,11 +1,15 @@
-name: Lint
+name: Lint Checking
 
-on: [push, pull_request]
+on:
+  repository_dispatch:
+    types: [trigger-lint-check]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.client_payload.sha }}
       - uses: actions/setup-python@v2
       - uses: psf/black@stable
