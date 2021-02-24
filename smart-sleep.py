@@ -54,7 +54,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     except KeyError:
         logger.exception("SSID value not provided in config file!")
     else:
-        logger.info(f"WiFi SSID \"{SSID}\" loaded...")
+        logger.info(f'WiFi SSID "{SSID}" loaded...')
 
 
 def alert_onTelegram(message: str):
@@ -89,7 +89,9 @@ console.setFormatter(colors)
 
 # File logs uncolored
 file_logs_uncolored = logging.FileHandler("logs.log")
-uncolored_formatter = logging.Formatter(FORMATTER["format"].replace("{color}",""), datefmt=FORMATTER["datefmt"], style="{")
+uncolored_formatter = logging.Formatter(
+    FORMATTER["format"].replace("{color}", ""), datefmt=FORMATTER["datefmt"], style="{"
+)
 file_logs_uncolored.setFormatter(uncolored_formatter)
 
 # File logs colored
