@@ -7,11 +7,11 @@
     ```YAML
     ssid: WiFi Name
     night phase:
-        - start time: HH:MM
-        - end time: HH:MM
+        start time: HH:MM
+        end time: HH:MM
     morning phase:
-        - start time: HH:MM
-        - end time: HH:MM
+        start time: HH:MM
+        end time: HH:MM
     timeout: 500
     ```
 
