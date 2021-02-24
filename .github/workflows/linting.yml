@@ -27,6 +27,8 @@ jobs:
           black: true
           black_extensions: py
           auto_fix: true
+          git_email: 41898282+github-actions[bot]@users.noreply.github.com
+          git_name: github-actions[bot]
 
       - name: Trigger next workflow
         if: always()
