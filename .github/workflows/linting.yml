@@ -17,21 +17,21 @@ jobs:
           python-version: 3.8
 
       - name: Install Python dependencies
-        run: pip install black flake8
+        run: pip install black
 
       - name: Run linters
         uses: wearerequired/lint-action@v1
         with:
-          github_token: ${{ secrets.LINTING_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # Enable linters
           black: true
+          black_extensions: py
           auto_fix: true
 
       - name: Trigger next workflow
         if: always()
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.LINTING_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           event-type: trigger-lint-check
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
