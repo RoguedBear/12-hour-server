@@ -65,8 +65,8 @@ def config_loader(filename: str = "config.yaml") -> dict:
     # night phase timing
     try:
         NIGHT_PHASE = config["night phase"]
-        assert 'start time' in NIGHT_PHASE, "`start time` value missing in config file"
-        assert 'end time' in NIGHT_PHASE, "`end time` value missing in config file"
+        assert "start time" in NIGHT_PHASE, "`start time` value missing in config file"
+        assert "end time" in NIGHT_PHASE, "`end time` value missing in config file"
     except KeyError:
         logger.exception("`night phase` value not provided in config file!")
         quit(1)
@@ -74,13 +74,15 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.exception("Values for `night phase` are missing in config file!")
         quit(1)
     else:
-        logger.info(f'Night Phase and it\'s timings loaded...')
+        logger.info(f"Night Phase and it's timings loaded...")
 
     # morning phase timing
     try:
         MORNING_PHASE = config["morning phase"]
-        assert 'start time' in MORNING_PHASE, "`start time` value missing in config file"
-        assert 'end time' in MORNING_PHASE, "`end time` value missing in config file"
+        assert (
+            "start time" in MORNING_PHASE
+        ), "`start time` value missing in config file"
+        assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
         logger.exception("`morning phase` value not provided in config file!")
         quit(1)
@@ -88,7 +90,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.exception("Values for `morning phase` are missing in config file!")
         quit(1)
     else:
-        logger.info(f'Morning Phase and it\'s timings loaded...')
+        logger.info(f"Morning Phase and it's timings loaded...")
 
     # try loading Telegram bot token
     try:
@@ -107,8 +109,10 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.info("Telegram bot_token and chat id loaded...")
 
     try:
-        TIMEOUT = config['timeout']
-        assert isinstance(TIMEOUT, int) is True, f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
+        TIMEOUT = config["timeout"]
+        assert (
+            isinstance(TIMEOUT, int) is True
+        ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
     except AssertionError as e:
@@ -116,7 +120,6 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Custom TIMEOUT({TIMEOUT} seconds) loaded...")
-
 
 
 def alert_onTelegram(message: str):
@@ -133,7 +136,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-              "&text=" + message[:1000]
+            "&text=" + message[:1000]
         )
 
 
