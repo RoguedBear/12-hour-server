@@ -2,6 +2,7 @@
 import colorama
 import requests
 import logging
+import subprocess
 from colorama import Fore
 
 # program constants
@@ -125,6 +126,19 @@ oooooooooooo                                       .    o8o
 o888o         `V88V"V8P' o888o o888o `Y8bod8P'   "888" o888o `Y8bod8P' o888o o888o 8""888P'
 """
 
+def connected_to_wifi(ssid:str) -> bool:
+    """
+    checks whether the device is connected to wifi using linux's nmcli command.
+    Assumes, that the device automatically connects to `ssid` if `ssid` is in range.
+    so we just need to check if wifi scan discovers the ssid
+    :param ssid: str, the name of the wifi network
+    :return: bool
+    """
+    scan_output = subprocess.check_output(["nmcli", "device", "wifi", "list"]).decode()
+    return ssid in scan_output
+
 
 if __name__ == "__main__":
     config_loader()
+
+    # Test 1
