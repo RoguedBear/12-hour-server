@@ -109,7 +109,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         MORNING_PHASE = config["morning phase"]
         assert (
-                "start time" in MORNING_PHASE
+            "start time" in MORNING_PHASE
         ), "`start time` value missing in config file"
         assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
@@ -141,7 +141,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-                isinstance(TIMEOUT, int) is True
+            isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -208,7 +208,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-              "&text=" + message[:1000]
+            "&text=" + message[:1000]
         )
 
 
@@ -312,8 +312,11 @@ def get_current_time_delta() -> datetime.timedelta:
     :return:
     """
     current_time = datetime.datetime.now()
-    return datetime.timedelta(hours=current_time.hour, minutes=current_time.minute,
-                              seconds=current_time.second)
+    return datetime.timedelta(
+        hours=current_time.hour,
+        minutes=current_time.minute,
+        seconds=current_time.second,
+    )
 
 
 def connected_to_wifi(ssid: str) -> bool:
@@ -329,7 +332,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-        connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -351,8 +354,8 @@ def check_connected_to_internetV2(
 
         return int(
             subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
-                .decode()
-                .strip("\n")
+            .decode()
+            .strip("\n")
         )
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
@@ -394,13 +397,19 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
         raise ValueError("Given time passed in as argument has already passed!")
 
     # now we go schleep schleep
-    wake_up_print = datetime.datetime.combine(datetime.datetime.today().date(), (datetime.datetime.min + time).time())
+    wake_up_print = datetime.datetime.combine(
+        datetime.datetime.today().date(), (datetime.datetime.min + time).time()
+    )
     wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
     logger.info("Going schleep schleep, and will wake up at %s.", wake_up_print)
     if not debug:
-        output = subprocess.check_output(["sudo", "rtcwake", "-m", "mem", "-s", str(time_to_wake_up.seconds)])
+        output = subprocess.check_output(
+            ["sudo", "rtcwake", "-m", "mem", "-s", str(time_to_wake_up.seconds)]
+        )
     else:
-        output = subprocess.check_output(["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)])
+        output = subprocess.check_output(
+            ["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
+        )
     logger.debug(output.decode())
 
 
