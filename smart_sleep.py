@@ -81,7 +81,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         MORNING_PHASE = config["morning phase"]
         assert (
-                "start time" in MORNING_PHASE
+            "start time" in MORNING_PHASE
         ), "`start time` value missing in config file"
         assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
@@ -112,7 +112,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-                isinstance(TIMEOUT, int) is True
+            isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -137,7 +137,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-              "&text=" + message[:1000]
+            "&text=" + message[:1000]
         )
 
 
@@ -204,7 +204,9 @@ def connected_to_wifi(ssid: str) -> bool:
     return ssid in scan_output
 
 
-def check_connected_to_internetV2(connection_type: Literal["any", 'wired', "wireless"] = 'any') -> Tuple[bool, Tuple[str]]:
+def check_connected_to_internetV2(
+    connection_type: Literal["any", "wired", "wireless"] = "any"
+) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
     src: https://sourcedigit.com/20684-how-to-check-eth0-status-on-linux-ubuntu-find-network-interface-card-details-on-ubuntu/
@@ -212,6 +214,7 @@ def check_connected_to_internetV2(connection_type: Literal["any", 'wired', "wire
     accepted arguments: 'wired', 'wireless', 'any'
     :return: bool
     """
+
     def get_card_status(card_name: str) -> int:
         """
 
@@ -219,29 +222,31 @@ def check_connected_to_internetV2(connection_type: Literal["any", 'wired', "wire
         :return: int, 0 or 1
         """
 
-        return int(subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"]).decode().strip('\n'))
+        return int(
+            subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
+            .decode()
+            .strip("\n")
+        )
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
-    wired = [e for e in network_devices if e[0] == 'e']
-    wireless = [w for w in network_devices if w[0] == 'w']
+    wired = [e for e in network_devices if e[0] == "e"]
+    wireless = [w for w in network_devices if w[0] == "w"]
 
     logger.debug(f"wired devices found ({len(wired)}): {wired}")
     logger.debug(f"wireless devices found ({len(wireless)}): {wireless}")
     CONNECTED_TO_INTERNET = False
     DEVICE_CONNECTED = []
 
-    devices = {
-        'wired': wired,
-        'wireless': wireless,
-        'any': wired + wireless
-    }
+    devices = {"wired": wired, "wireless": wireless, "any": wired + wireless}
 
     for card in devices[connection_type]:
         logger.debug("Testing device... " + Fore.CYAN + card)
         if get_card_status(card) == 1:
             CONNECTED_TO_INTERNET = True
             DEVICE_CONNECTED.append(card)
-            logger.debug(f"Device: {Fore.CYAN + card + Fore.WHITE} is connected to internet")
+            logger.debug(
+                f"Device: {Fore.CYAN + card + Fore.WHITE} is connected to internet"
+            )
 
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
 
