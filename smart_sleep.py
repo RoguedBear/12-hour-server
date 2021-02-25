@@ -73,7 +73,9 @@ def config_loader(filename: str = "config.yaml") -> dict:
         )
         quit(1)
     except FileNotFoundError:
-        logger.exception("config.yaml file not made. Please make it according to the specifications")
+        logger.exception(
+            "config.yaml file not made. Please make it according to the specifications"
+        )
         quit(1)
 
     global SSID, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
@@ -164,17 +166,29 @@ def config_loader(filename: str = "config.yaml") -> dict:
         try:
             times = parse_time(phase)
         except AssertionError as e:
-            logger.error("Datetime value in config.yml for '%s' not in range\nValueError:%s", phase['name'].lower() ,e)
+            logger.error(
+                "Datetime value in config.yml for '%s' not in range\nValueError:%s",
+                phase["name"].lower(),
+                e,
+            )
             quit(1)
         except TypeError as e:
-            logger.error("Datetime value in config.yml for '%s' not in right format\nTypeError:%s",phase['name'].lower() , e)
+            logger.error(
+                "Datetime value in config.yml for '%s' not in right format\nTypeError:%s",
+                phase["name"].lower(),
+                e,
+            )
             quit(1)
         else:
-            phase['start time'] = times['start time']
-            phase['end time'] = times['end time']
-            logger.info("Parsing time for %s... %sDone", phase['name'], Fore.GREEN)
-            logger.info("Time range loaded for %s: (%s — %s)", phase['name'], str(phase['start time']), str(phase['end time']))
-
+            phase["start time"] = times["start time"]
+            phase["end time"] = times["end time"]
+            logger.info("Parsing time for %s... %sDone", phase["name"], Fore.GREEN)
+            logger.info(
+                "Time range loaded for %s: (%s — %s)",
+                phase["name"],
+                str(phase["start time"]),
+                str(phase["end time"]),
+            )
 
 
 def alert_onTelegram(message: str):
