@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.8
 # TODO: add tails -f log.log or less -R +F log.log in the readme
 # TODO: add code style badge in README
 import colorama
@@ -47,10 +47,16 @@ def config_loader(filename: str = "config.yaml") -> dict:
     :param filename: str, the filename
     :return: dictionary
     """
-    import yaml
-
-    with open("config.yaml") as config_file:
-        config = yaml.safe_load(config_file)
+    try:
+        import yaml
+        with open("config.yaml") as config_file:
+            config = yaml.safe_load(config_file)
+    except ModuleNotFoundError:
+        logger.exception("pyyaml module nto found!\nare you sure you have installed requirements.txt")
+        quit(1)
+    except FileNotFoundError:
+        logger.error("config.yaml file not made. Please make it according to the specifications")
+        quit(1)
 
     global SSID, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
     # try and load each of the important stuff
