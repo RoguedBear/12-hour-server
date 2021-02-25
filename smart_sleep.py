@@ -55,7 +55,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.exception("pyyaml module nto found!\nare you sure you have installed requirements.txt")
         quit(1)
     except FileNotFoundError:
-        logger.error("config.yaml file not made. Please make it according to the specifications")
+        logger.exception("config.yaml file not made. Please make it according to the specifications")
         quit(1)
 
     global SSID, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
@@ -64,8 +64,9 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         SSID = config["ssid"]
     except KeyError:
-        logger.exception("SSID value not provided in config file!")
-        quit(1)
+        # logger.exception("SSID value not provided in config file!")
+        # quit(1)
+        logger.info("SSID not provided. Moving on...")
     else:
         logger.info(f'WiFi SSID "{SSID}" loaded...')
 
