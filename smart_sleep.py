@@ -64,13 +64,18 @@ def config_loader(filename: str = "config.yaml") -> dict:
     """
     try:
         import yaml
+
         with open("config.yaml") as config_file:
             config = yaml.safe_load(config_file)
     except ModuleNotFoundError:
-        logger.exception("pyyaml module nto found!\nare you sure you have installed requirements.txt")
+        logger.exception(
+            "pyyaml module nto found!\nare you sure you have installed requirements.txt"
+        )
         quit(1)
     except FileNotFoundError:
-        logger.exception("config.yaml file not made. Please make it according to the specifications")
+        logger.exception(
+            "config.yaml file not made. Please make it according to the specifications"
+        )
         quit(1)
 
     global SSID, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
@@ -98,7 +103,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Night Phase and it's timings loaded...")
-        NIGHT_PHASE['name'] = "NIGHT PHASE"
+        NIGHT_PHASE["name"] = "NIGHT PHASE"
 
     # morning phase timing
     try:
@@ -115,7 +120,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Morning Phase and it's timings loaded...")
-        MORNING_PHASE['name'] = "MORNING PHASE"
+        MORNING_PHASE["name"] = "MORNING PHASE"
 
     # try loading Telegram bot token
     try:
@@ -163,17 +168,29 @@ def config_loader(filename: str = "config.yaml") -> dict:
         try:
             times = parse_time(phase)
         except AssertionError as e:
-            logger.error("Datetime value in config.yml for '%s' not in range\nValueError:%s", phase['name'].lower() ,e)
+            logger.error(
+                "Datetime value in config.yml for '%s' not in range\nValueError:%s",
+                phase["name"].lower(),
+                e,
+            )
             quit(1)
         except TypeError as e:
-            logger.error("Datetime value in config.yml for '%s' not in right format\nTypeError:%s",phase['name'].lower() , e)
+            logger.error(
+                "Datetime value in config.yml for '%s' not in right format\nTypeError:%s",
+                phase["name"].lower(),
+                e,
+            )
             quit(1)
         else:
-            phase['start time'] = times['start time']
-            phase['end time'] = times['end time']
-            logger.info("Parsing time for %s... %sDone", phase['name'], Fore.GREEN)
-            logger.info("Time range loaded for %s: (%s — %s)", phase['name'], str(phase['start time']), str(phase['end time']))
-
+            phase["start time"] = times["start time"]
+            phase["end time"] = times["end time"]
+            logger.info("Parsing time for %s... %sDone", phase["name"], Fore.GREEN)
+            logger.info(
+                "Time range loaded for %s: (%s — %s)",
+                phase["name"],
+                str(phase["start time"]),
+                str(phase["end time"]),
+            )
 
 
 def alert_onTelegram(message: str):
@@ -267,8 +284,8 @@ def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
     """
     logger.debug("Data received: %s", phase_dict)
     ultimate_time = datetime.timedelta(hours=23, minutes=59, seconds=59)
-    start_time = phase_dict['start time']
-    end_time = phase_dict['end time']
+    start_time = phase_dict["start time"]
+    end_time = phase_dict["end time"]
     converted_time = []
     for index, time in enumerate([start_time, end_time]):
         time_key = "start time" if index == 0 else "end time"
@@ -278,14 +295,13 @@ def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
         except TypeError as e:
             raise TypeError(str(e) + " [\"{}\" in '{}']".format(time, time_key))
         else:
-            assert time <= ultimate_time, f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
+            assert (
+                time <= ultimate_time
+            ), f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
             converted_time.append(time)
     # breakpoint()
 
-    return {
-        'start time': converted_time[0],
-        'end time': converted_time[1]
-    }
+    return {"start time": converted_time[0], "end time": converted_time[1]}
 
 
 def connected_to_wifi(ssid: str) -> bool:
