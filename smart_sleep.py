@@ -295,10 +295,10 @@ def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
         except TypeError as e:
             raise TypeError(str(e) + " [\"{}\" in '{}']".format(time, time_key))
         else:
-            assert (
-                datetime.timedelta(seconds=0) <= time <= ultimate_time
-            ), f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the " \
-               "time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
+            assert datetime.timedelta(seconds=0) <= time <= ultimate_time, (
+                f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the "
+                "time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
+            )
             converted_time.append(time)
     # breakpoint()
 
