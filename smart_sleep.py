@@ -110,7 +110,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         MORNING_PHASE = config["morning phase"]
         assert (
-                "start time" in MORNING_PHASE
+            "start time" in MORNING_PHASE
         ), "`start time` value missing in config file"
         assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
@@ -142,7 +142,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-                isinstance(TIMEOUT, int) is True
+            isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -209,7 +209,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-              "&text=" + message[:1000]
+            "&text=" + message[:1000]
         )
 
 
@@ -326,10 +326,12 @@ def current_time_within_time_range(phase: dict) -> bool:
     :param phase: dictionary containing the phase's start and end time
     :return: bool
     """
-    return phase['start time'] <= get_current_time_delta() < phase['end time']
+    return phase["start time"] <= get_current_time_delta() < phase["end time"]
 
 
-def get_nearest_phase(*args, key: Literal['start time', 'end time'] = "start time") -> Tuple[str, datetime.timedelta]:
+def get_nearest_phase(
+    *args, key: Literal["start time", "end time"] = "start time"
+) -> Tuple[str, datetime.timedelta]:
     """
     This function will return the phase which is nearest to the current time.
     We'll get a list/tuple of all the phase names and their start timings.
@@ -350,7 +352,7 @@ def get_nearest_phase(*args, key: Literal['start time', 'end time'] = "start tim
 
     logger.debug("%s\t%s", args, list(map(key_function, args)))
     answer = max(args, key=key_function)
-    return answer['name'], answer['start time'] - now
+    return answer["name"], answer["start time"] - now
 
 
 def connected_to_wifi(ssid: str) -> bool:
@@ -366,7 +368,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-        connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -388,8 +390,8 @@ def check_connected_to_internetV2(
 
         return int(
             subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
-                .decode()
-                .strip("\n")
+            .decode()
+            .strip("\n")
         )
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
@@ -445,7 +447,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
             ["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
         )
     logger.debug(output.decode())
-    logger.info("\"Good Mawrning!\" [read that in Tim Cook way] I am awake now.")
+    logger.info('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
 
 
 def suspend_thread_until(time: datetime.timedelta):
