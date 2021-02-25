@@ -2,6 +2,7 @@
 # TODO: add tails -f log.log or less -R +F log.log in the readme
 # TODO: add code style badge in README
 import datetime
+from time import sleep
 
 import colorama
 import requests
@@ -109,7 +110,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         MORNING_PHASE = config["morning phase"]
         assert (
-            "start time" in MORNING_PHASE
+                "start time" in MORNING_PHASE
         ), "`start time` value missing in config file"
         assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
@@ -141,7 +142,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-            isinstance(TIMEOUT, int) is True
+                isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -208,7 +209,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-            "&text=" + message[:1000]
+              "&text=" + message[:1000]
         )
 
 
@@ -319,6 +320,39 @@ def get_current_time_delta() -> datetime.timedelta:
     )
 
 
+def current_time_within_time_range(phase: dict) -> bool:
+    """
+    checks whether the current time is within the start-time <= time < end-time range
+    :param phase: dictionary containing the phase's start and end time
+    :return: bool
+    """
+    return phase['start time'] <= get_current_time_delta() < phase['end time']
+
+
+def get_nearest_phase(*args, key: Literal['start time', 'end time'] = "start time") -> Tuple[str, datetime.timedelta]:
+    """
+    This function will return the phase which is nearest to the current time.
+    We'll get a list/tuple of all the phase names and their start timings.
+    Then run the super complex python expression to get the nearest phase
+    :param key: the key to check within range against
+    :param args:
+    :return: tuple of the nearest phase and the time left until then
+    """
+    now = get_current_time_delta()
+
+    def key_function(dict_):
+        """
+        This function will be the "key" function to be put in max()'s key arg
+        :param dict_: the dict
+        :return: the output of the difference b/w current time and the start time of the phase
+        """
+        return dict_[key] - now
+
+    logger.debug("%s\t%s", args, list(map(key_function, args)))
+    answer = max(args, key=key_function)
+    return answer['name'], answer['start time'] - now
+
+
 def connected_to_wifi(ssid: str) -> bool:
     """
     checks whether the device is connected to wifi using linux's nmcli command.
@@ -332,7 +366,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+        connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -354,8 +388,8 @@ def check_connected_to_internetV2(
 
         return int(
             subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
-            .decode()
-            .strip("\n")
+                .decode()
+                .strip("\n")
         )
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
@@ -411,13 +445,62 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
             ["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
         )
     logger.debug(output.decode())
+    logger.info("\"Good Mawrning!\" [read that in Tim Cook way] I am awake now.")
 
+
+def suspend_thread_until(time: datetime.timedelta):
+    """
+    suspends the current thread until the `time` time reaches using time.sleep()
+    :param time: the time to wake the thread
+    :return: None
+    """
+    time_to_wake_up = time - get_current_time_delta()
+    sleep(time_to_wake_up.total_seconds())
+
+
+"""
+                888b     d888        d8888 8888888 888b    888 
+                8888b   d8888       d88888   888   8888b   888 
+                88888b.d88888      d88P888   888   88888b  888 
+                888Y88888P888     d88P 888   888   888Y88b 888 
+                888 Y888P 888    d88P  888   888   888 Y88b888 
+                888  Y8P  888   d88P   888   888   888  Y88888 
+                888   "   888  d8888888888   888   888   Y8888 
+                888       888 d88P     888 8888888 888    Y888 
+"""
 
 if __name__ == "__main__":
-    config_loader()
-    logger.debug("Testing check_connected_to_internetV2() function:")
-    logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
+    debug = True
+    if debug:
+        config_loader()
+        logger.debug("Testing check_connected_to_internetV2() function:")
+        logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
 
-    # test sleep function
-    delta = get_current_time_delta() + datetime.timedelta(seconds=30)
-    sleep_computer_but_wake_at(delta, debug=True)
+        # test sleep function
+        delta = get_current_time_delta() + datetime.timedelta(seconds=10)
+        # sleep_computer_but_wake_at(delta, debug=True)
+
+        print(get_nearest_phase(MORNING_PHASE, NIGHT_PHASE))
+
+    # The main big brain logic of the program
+    """Pseudocode:
+    *check which phase is the nearest to us.
+    *check if we are in the night phase or morning phase.
+    -NIGHT PHASE
+    * check if internet is still connected
+    * if yes. no problem. check again in TIMEOUT seconds.
+    * if internet is not there, wait 5-10 minute (or WIFI_Wait).
+        * if internet still not there, sleep until morning phase
+    * if we're within ~TIMEOUT seconds of `end time` of the NIGHT PHASE, go to sleep
+    
+    - MORNING PHASE
+    * wakey wakey and see if internet is connected. after waiting 60 seconds giving the computer oppurtunity to connect
+    * if internet not there, sleep and check again in TIMEOUT seconds
+    * if internet there no problem. awake, sleep until NighPhase
+    * if we're within ~TIMEOUT seconds of `end time` of morning phase, we'll go awake and sleep the thread until 
+       NIGHTPHASE arrives
+    
+    - NEITHER
+    * if we're in neither phase (possibly cuz you ran the program at your own will), suspend the thread if nearest is 
+      NIGHT, else sleep if the nearest is morning
+    """
