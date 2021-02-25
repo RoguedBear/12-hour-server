@@ -1,12 +1,14 @@
 #!/usr/bin/env python3.8
 # TODO: add tails -f log.log or less -R +F log.log in the readme
 # TODO: add code style badge in README
+import datetime
+
 import colorama
 import requests
 import logging
 import subprocess
 from colorama import Fore
-from typing import Literal, Tuple
+from typing import Literal, Tuple, Dict
 
 # program constants
 CHAT_ID = ""
@@ -47,6 +49,19 @@ def config_loader(filename: str = "config.yaml") -> dict:
     :param filename: str, the filename
     :return: dictionary
     """
+    """
+888                        888                                 .d888 
+888                        888                                d88P"  
+888                        888                                888    
+888  .d88b.   8888b.   .d88888       .d8888b .d88b.  88888b.  888888 
+888 d88""88b     "88b d88" 888      d88P"   d88""88b 888 "88b 888    
+888 888  888 .d888888 888  888      888     888  888 888  888 888    
+888 Y88..88P 888  888 Y88b 888      Y88b.   Y88..88P 888  888 888    
+888  "Y88P"  "Y888888  "Y88888       "Y8888P "Y88P"  888  888 888    
+                                                                     
+                                                                     
+                                                                     
+    """
     try:
         import yaml
         with open("config.yaml") as config_file:
@@ -83,6 +98,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Night Phase and it's timings loaded...")
+        NIGHT_PHASE['name'] = "NIGHT PHASE"
 
     # morning phase timing
     try:
@@ -99,6 +115,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Morning Phase and it's timings loaded...")
+        MORNING_PHASE['name'] = "MORNING PHASE"
 
     # try loading Telegram bot token
     try:
@@ -129,6 +146,35 @@ def config_loader(filename: str = "config.yaml") -> dict:
     else:
         logger.info(f"Custom TIMEOUT({TIMEOUT} seconds) loaded...")
 
+    """
+8888888b.                                         88888888888 d8b                        
+888   Y88b                                            888     Y8P                        
+888    888                                            888                                
+888   d88P 8888b.  888d888 .d8888b   .d88b.           888     888 88888b.d88b.   .d88b.  
+8888888P"     "88b 888P"   88K      d8P  Y8b          888     888 888 "888 "88b d8P  Y8b 
+888       .d888888 888     "Y8888b. 88888888          888     888 888  888  888 88888888 
+888       888  888 888          X88 Y8b.              888     888 888  888  888 Y8b.     
+888       "Y888888 888      88888P'  "Y8888           888     888 888  888  888  "Y8888                                                                                           
+    """
+
+    # Parsing Night Phase + Morning Phase timings
+
+    for phase in [NIGHT_PHASE, MORNING_PHASE]:
+        try:
+            times = parse_time(phase)
+        except AssertionError as e:
+            logger.error("Datetime value in config.yml for '%s' not in range\nValueError:%s", phase['name'].lower() ,e)
+            quit(1)
+        except TypeError as e:
+            logger.error("Datetime value in config.yml for '%s' not in right format\nTypeError:%s",phase['name'].lower() , e)
+            quit(1)
+        else:
+            phase['start time'] = times['start time']
+            phase['end time'] = times['end time']
+            logger.info("Parsing time for %s... %sDone", phase['name'], Fore.GREEN)
+            logger.info("Time range loaded for %s: (%s — %s)", phase['name'], str(phase['start time']), str(phase['end time']))
+
+
 
 def alert_onTelegram(message: str):
     """
@@ -147,6 +193,20 @@ def alert_onTelegram(message: str):
             "&text=" + message[:1000]
         )
 
+
+"""
+888                            d8b                   
+888                            Y8P                   
+888                                                  
+888  .d88b.   .d88b.   .d88b.  888 88888b.   .d88b.  
+888 d88""88b d88P"88b d88P"88b 888 888 "88b d88P"88b 
+888 888  888 888  888 888  888 888 888  888 888  888 
+888 Y88..88P Y88b 888 Y88b 888 888 888  888 Y88b 888 
+888  "Y88P"   "Y88888  "Y88888 888 888  888  "Y88888 
+                  888      888                   888 
+             Y8b d88P Y8b d88P              Y8b d88P 
+              "Y88P"   "Y88P"                "Y88P"  
+"""
 
 # Initialise colorama
 colorama.init(autoreset=True)
@@ -197,6 +257,35 @@ oooooooooooo                                       .    o8o
  888          888   888   888   888  888   .o8   888 .  888  888   888  888   888  o.  )88b 
 o888o         `V88V"V8P' o888o o888o `Y8bod8P'   "888" o888o `Y8bod8P' o888o o888o 8""888P'
 """
+
+
+def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
+    """
+    Returns the new dictionary with parsed datetime from string
+    :param phase_dict: the phase dictionary containing datetime string
+    :return:
+    """
+    logger.debug("Data received: %s", phase_dict)
+    ultimate_time = datetime.timedelta(hours=23, minutes=59, seconds=59)
+    start_time = phase_dict['start time']
+    end_time = phase_dict['end time']
+    converted_time = []
+    for index, time in enumerate([start_time, end_time]):
+        time_key = "start time" if index == 0 else "end time"
+        try:
+            # now we convert those "seconds" to "hours". aka instead of 1600 hrs -> 16min -> 960s to 1600hrs -> 57600
+            time = datetime.timedelta(seconds=time * 60)
+        except TypeError as e:
+            raise TypeError(str(e) + " [\"{}\" in '{}']".format(time, time_key))
+        else:
+            assert time <= ultimate_time, f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
+            converted_time.append(time)
+    # breakpoint()
+
+    return {
+        'start time': converted_time[0],
+        'end time': converted_time[1]
+    }
 
 
 def connected_to_wifi(ssid: str) -> bool:
@@ -260,4 +349,5 @@ def check_connected_to_internetV2(
 
 if __name__ == "__main__":
     config_loader()
-    logger.debug(check_connected_to_internetV2())
+    logger.debug("Testing check_connected_to_internetV2() function:")
+    logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
