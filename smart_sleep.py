@@ -8,7 +8,7 @@ import requests
 import logging
 import subprocess
 from colorama import Fore
-from typing import Literal, Tuple, Dict
+from typing import Literal, Tuple, Dict, Optional
 
 # program constants
 CHAT_ID = ""
@@ -65,7 +65,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         import yaml
 
-        with open("config.yaml") as config_file:
+        with open(filename) as config_file:
             config = yaml.safe_load(config_file)
     except ModuleNotFoundError:
         logger.exception(
@@ -109,7 +109,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         MORNING_PHASE = config["morning phase"]
         assert (
-            "start time" in MORNING_PHASE
+                "start time" in MORNING_PHASE
         ), "`start time` value missing in config file"
         assert "end time" in MORNING_PHASE, "`end time` value missing in config file"
     except KeyError:
@@ -141,7 +141,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-            isinstance(TIMEOUT, int) is True
+                isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -191,6 +191,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
                 str(phase["start time"]),
                 str(phase["end time"]),
             )
+    return config
 
 
 def alert_onTelegram(message: str):
@@ -207,7 +208,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + CHAT_ID
             + "&parse_mode=Markdown"
-            "&text=" + message[:1000]
+              "&text=" + message[:1000]
         )
 
 
@@ -296,13 +297,23 @@ def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
             raise TypeError(str(e) + " [\"{}\" in '{}']".format(time, time_key))
         else:
             assert datetime.timedelta(seconds=0) <= time <= ultimate_time, (
-                f"'{time_key}' value '{phase_dict[time_key]//60}:{phase_dict[time_key] % 60}' out of range! Ensure the "
+                f"'{time_key}' value '{phase_dict[time_key] // 60}:{phase_dict[time_key] % 60}' out of range! Ensure the "
                 "time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
             )
             converted_time.append(time)
     # breakpoint()
 
     return {"start time": converted_time[0], "end time": converted_time[1]}
+
+
+def get_current_time_delta() -> datetime.timedelta:
+    """
+    returns the current time in timedelta format
+    :return:
+    """
+    current_time = datetime.datetime.now()
+    return datetime.timedelta(hours=current_time.hour, minutes=current_time.minute,
+                              seconds=current_time.second)
 
 
 def connected_to_wifi(ssid: str) -> bool:
@@ -318,27 +329,30 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+        connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
-    src: https://sourcedigit.com/20684-how-to-check-eth0-status-on-linux-ubuntu-find-network-interface-card-details-on-ubuntu/
-    :param connection_type: the type of connection to check whether connected to internet or not. by default scans for ethernet and for wifi
+    src: https://sourcedigit.com/20684-how-to-check-eth0-status-on-linux-ubuntu-find-network-interface-card-details-on-
+    ubuntu/
+    :param connection_type: the type of connection to check whether connected to internet or not. by default scans for
+    ethernet and for wifi
     accepted arguments: 'wired', 'wireless', 'any'
     :return: bool
     """
 
     def get_card_status(card_name: str) -> int:
         """
-
+        checks and returns the status of network cards [wired and/or wireless] and if they're connected to internet
+        or not as reported by the system
         :param card_name: the name of the network card
         :return: int, 0 or 1
         """
 
         return int(
             subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
-            .decode()
-            .strip("\n")
+                .decode()
+                .strip("\n")
         )
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
@@ -364,7 +378,37 @@ def check_connected_to_internetV2(
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
 
 
+def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
+    """
+    sleeps the computer when func is executed and sets the wake timer till `time` seconds using rtcwake
+    Assumes the time is greater than `now` time.
+    :param time: the datetime.timedelta object of the time you need the computer to wake up at
+    :return: None
+    Raises a ValueError if time is less than current time
+    """
+    # get the time in seconds left until wake time
+    time_to_wake_up = time - get_current_time_delta()
+
+    # check if time isn't negative
+    if time_to_wake_up.total_seconds() <= 0:
+        raise ValueError("Given time passed in as argument has already passed!")
+
+    # now we go schleep schleep
+    wake_up_print = datetime.datetime.combine(datetime.datetime.today().date(), (datetime.datetime.min + time).time())
+    wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
+    logger.info("Going schleep schleep, and will wake up at %s.", wake_up_print)
+    if not debug:
+        output = subprocess.check_output(["sudo", "rtcwake", "-m", "mem", "-s", str(time_to_wake_up.seconds)])
+    else:
+        output = subprocess.check_output(["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)])
+    logger.debug(output.decode())
+
+
 if __name__ == "__main__":
     config_loader()
     logger.debug("Testing check_connected_to_internetV2() function:")
     logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
+
+    # test sleep function
+    delta = get_current_time_delta() + datetime.timedelta(seconds=30)
+    sleep_computer_but_wake_at(delta, debug=True)
