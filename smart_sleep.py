@@ -472,14 +472,19 @@ def sleep_or_suspend_until(time: datetime.timedelta, mode: Literal["suspend", "s
         - 'sleep': will make the computer go to sleep.
     :return:
     """
-    if mode == 'suspend':
+    if mode == "suspend":
         suspend_thread_until(time)
-    elif mode == 'sleep':
+    elif mode == "sleep":
         sleep_computer_but_wake_at(time, debug=True)
     else:
-        logger.error("'%s' is not a valid argument for parameter 'mode'. 'mode' can either be 'sleep' or 'suspend'",
-                     mode)
-    logger.debug("%s is awake now, suspending the thread for 5 seconds...", 'computer' if mode == 'sleep' else 'program')
+        logger.error(
+            "'%s' is not a valid argument for parameter 'mode'. 'mode' can either be 'sleep' or 'suspend'",
+            mode,
+        )
+    logger.debug(
+        "%s is awake now, suspending the thread for 5 seconds...",
+        "computer" if mode == "sleep" else "program",
+    )
     sleep(5)
 
 
