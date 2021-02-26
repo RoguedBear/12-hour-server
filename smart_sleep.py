@@ -369,6 +369,32 @@ def get_nearest_phase(
     return answer["name"], answer["start time"] - now
 
 
+def get_nearest_phaseV2(phase1, phase2) -> Tuple[str, datetime.timedelta]:
+    """
+    This function will return the phase which is nearest to the current time.
+    :param phase1: the first phase time + name dict
+    :param phase2: the second phase time + name dict
+    :return: tuple of the nearest phase and the time left until then
+    """
+    now = get_current_time_delta()
+    range_1 = {
+        'name': phase2['name'],
+        'start time': phase1['end time'],
+        'end time': phase2['start time'],
+    }
+    range_2 = {
+        'name': phase1['name'],
+        'start time': phase2['end time'],
+        'end time': phase1['start time'],
+    }
+    if current_time_within_time_range(range_1):
+        return range_1['name'], range_1['start time'] - now
+    elif current_time_within_time_range(range_2):
+        return range_2['name'], range_2['start time'] - now
+
+
+
+
 def repr_time_delta(time: datetime.timedelta):
     """
     represents the passed in time delta as a proper date
@@ -653,7 +679,7 @@ if __name__ == "__main__":
         delta = get_current_time_delta() + datetime.timedelta(seconds=10)
         # sleep_computer_but_wake_at(delta, debug=True)
 
-        print(get_nearest_phase(MORNING_PHASE, NIGHT_PHASE))
+        print(get_nearest_phaseV2(MORNING_PHASE, NIGHT_PHASE))
 
         sleep_or_suspend_until(10, "suspend")
 
@@ -713,7 +739,7 @@ if __name__ == "__main__":
         # here we see which phase is the nearest to us and take actions accordingly
         else:
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} neither phase")
-            nearest_phase = get_nearest_phase(NIGHT_PHASE, MORNING_PHASE, key='start time')
+            nearest_phase = get_nearest_phaseV2(NIGHT_PHASE, MORNING_PHASE)
 
             # If nearest phase is MORNING_PHASE then sleep the computer until morning phase
             if nearest_phase[0] == 'MORNING PHASE':
