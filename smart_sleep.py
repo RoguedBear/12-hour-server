@@ -298,7 +298,8 @@ def parse_time(phase_dict: dict) -> Dict[str, datetime.timedelta]:
             raise TypeError(str(e) + " [\"{}\" in '{}']".format(time, time_key))
         else:
             assert datetime.timedelta(seconds=0) <= time <= ultimate_time, (
-                f"'{time_key}' value '{phase_dict[time_key] // 60}:{phase_dict[time_key] % 60}' out of range! Ensure the "
+                f"'{time_key}' value '{phase_dict[time_key] // 60}:{phase_dict[time_key] % 60}' out of range! Ensure "
+                f"the "
                 "time is in 24hr format and lies between 00:00 <= time <= 23:59:59"
             )
             converted_time.append(time)
@@ -458,6 +459,28 @@ def suspend_thread_until(time: datetime.timedelta):
     """
     time_to_wake_up = time - get_current_time_delta()
     sleep(time_to_wake_up.total_seconds())
+
+
+def sleep_or_suspend_until(time: datetime.timedelta, mode: Literal["suspend", "sleep"]):
+    """
+    This function will take the time, and choice of the user to either: sleep the computer, or suspend the thread. aka
+    time.sleep() suspend.
+    Will also pause the program for a few seconds to give the computer time to connect to the wifi.
+    :param time: time to wake the computer/thread at
+    :param mode:
+        - 'suspend': will time.sleep() the thread.
+        - 'sleep': will make the computer go to sleep.
+    :return:
+    """
+    if mode == 'suspend':
+        suspend_thread_until(time)
+    elif mode == 'sleep':
+        sleep_computer_but_wake_at(time, debug=True)
+    else:
+        logger.error("'%s' is not a valid argument for parameter 'mode'. 'mode' can either be 'sleep' or 'suspend'",
+                     mode)
+    logger.debug("%s is awake now, suspending the thread for 5 seconds...", 'computer' if mode == 'sleep' else 'program')
+    sleep(5)
 
 
 """
