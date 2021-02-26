@@ -9,14 +9,15 @@ import requests
 import logging
 import subprocess
 from colorama import Fore
-from typing import Literal, Tuple, Dict, Optional
+from typing import Literal, Tuple, Dict
 
 # program constants
 CHAT_ID = ""
 BOT_TOKEN = ""
-CONNECTION_TYPE = ""
+CONNECTION_TYPE: Literal['any', 'wired', 'wireless'] = "any"
 NIGHT_PHASE = None
 MORNING_PHASE = None
+TIMEOUT = 500
 
 # Logging formatter
 FORMATTER = {
@@ -79,7 +80,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         )
         quit(1)
 
-    global CONNECTION_TYPE, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN
+    global CONNECTION_TYPE, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN, TIMEOUT
     # try and load each of the important stuff
     # Wifi
     try:
@@ -458,20 +459,27 @@ def suspend_thread_until(time: datetime.timedelta):
     :return: None
     """
     time_to_wake_up = time - get_current_time_delta()
+
+    wake_up_print = datetime.datetime.combine(
+        datetime.datetime.today().date(), (datetime.datetime.min + time).time()
+    )
+    wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
+    logger.info("Sleeping the program until %s...", wake_up_print)
     sleep(time_to_wake_up.total_seconds())
 
 
-def sleep_or_suspend_until(time: datetime.timedelta, mode: Literal["suspend", "sleep"]):
+def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
     """
     This function will take the time, and choice of the user to either: sleep the computer, or suspend the thread. aka
     time.sleep() suspend.
     Will also pause the program for a few seconds to give the computer time to connect to the wifi.
-    :param time: time to wake the computer/thread at
+    :param time: the "duration" of seconds to wake the computer/thread after the "current" time
     :param mode:
         - 'suspend': will time.sleep() the thread.
         - 'sleep': will make the computer go to sleep.
     :return:
     """
+    time = get_current_time_delta() + datetime.timedelta(seconds=time)
     if mode == "suspend":
         suspend_thread_until(time)
     elif mode == "sleep":
@@ -481,11 +489,77 @@ def sleep_or_suspend_until(time: datetime.timedelta, mode: Literal["suspend", "s
             "'%s' is not a valid argument for parameter 'mode'. 'mode' can either be 'sleep' or 'suspend'",
             mode,
         )
+    DELAY = 5
     logger.debug(
-        "%s is awake now, suspending the thread for 5 seconds...",
+        "%s is awake now, suspending the thread for %d more seconds...",
         "computer" if mode == "sleep" else "program",
+        DELAY
     )
-    sleep(5)
+    sleep(DELAY)
+
+
+"""
+                                                                                    
+    88           88               88                                   88               
+    88           ""               88                                   ""               
+    88                            88                                                    
+    88,dPPYba,   88   ,adPPYb,d8  88,dPPYba,   8b,dPPYba,  ,adPPYYba,  88  8b,dPPYba,   
+    88P'    "8a  88  a8"    `Y88  88P'    "8a  88P'   "Y8  ""     `Y8  88  88P'   `"8a  
+    88       d8  88  8b       88  88       d8  88          ,adPPPPP88  88  88       88  
+    88b,   ,a8"  88  "8a,   ,d88  88b,   ,a8"  88          88,    ,88  88  88       88  
+    8Y"Ybbd8"'   88   `"YbbdP"Y8  8Y"Ybbd8"'   88          `"8bbdP"Y8  88  88       88  
+                      aa,    ,88                                                        
+                       "Y8bbdP"                                                         
+                                                                                        
+                88                                    88                                            
+                88                                    ""                                            
+                88                                                                                  
+                88           ,adPPYba,    ,adPPYb,d8  88   ,adPPYba,                                
+                88          a8"     "8a  a8"    `Y88  88  a8"     ""                                
+                88          8b       d8  8b       88  88  8b                                        
+                88          "8a,   ,a8"  "8a,   ,d88  88  "8a,   ,aa                                
+                88888888888  `"YbbdP"'    `"YbbdP"Y8  88   `"Ybbd8"'                                
+                                          aa,    ,88                                                
+                                           "Y8bbdP"                                                 
+"""
+
+
+def wait_for_connectivity_to_change_to(req_connection_status: Literal['connected', 'disconnected'], action: Literal['suspend', 'sleep']) -> Literal[True]:
+    """
+    This function is partly big brain logic.
+    It will take in two arguments. one to check what part to respond to. either disconnection from internet, or
+    connection to internet
+    the second argument will tell whether to suspend the thread or sleep the computer if status of connectivity remains
+    same.
+    This function will keep on running until the connectivity becomes what was specified. eg: if wait for
+    connection, then function will continue until computer connects to internet
+    if wait for disconnection, then program will continue until the connectivity drops
+    If computer/server is connected to the internet, then function will run until the connection drops
+    :param req_connection_status: the connection stage to wait
+    :return: 1
+    """
+    # convert connection types to a boolean dictionary
+    con_val = {
+        'connected': True,
+        'disconnected': False
+    }
+    # We start with an infinite loop.
+    logger.info("Waiting for connectivity to change too %s...", req_connection_status)
+    while True:
+        # We check now the status of internet connection.
+        status, _ = check_connected_to_internetV2(CONNECTION_TYPE)
+
+        # Now check if the internet status is the same as required status' boolean value
+        if status == con_val[req_connection_status]:
+            old = 'connected' if con_val[req_connection_status] else 'disconnected'
+            new = 'connected' if status else 'disconnected'
+            logger.info("Connection status has been changed! (%s -> %s)", old, new)
+            return True
+        # If the internet status is not what is required, then we just wait for TIMEOUT duration and check back
+        # again
+        else:
+            sleep_or_suspend_until(TIMEOUT, action)
+            continue
 
 
 """
@@ -511,6 +585,8 @@ if __name__ == "__main__":
         # sleep_computer_but_wake_at(delta, debug=True)
 
         print(get_nearest_phase(MORNING_PHASE, NIGHT_PHASE))
+
+        sleep_or_suspend_until(10, 'suspend')
 
     # The main big brain logic of the program
     """Pseudocode:
