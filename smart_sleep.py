@@ -405,6 +405,30 @@ def repr_time_delta(time: datetime.timedelta):
     return formated_time.strftime("%d/%b/%Y %H:%M:%S")
 
 
+def get_last_sleep_time() -> datetime.datetime:
+    """
+    returns tha last sleep time in datetime.datetime format.
+    uses the command: grep -E "PM: suspend entry" /var/log/syslog
+    to get the last sleep time from system logs
+    Since the year is not present in log file, assumes the last sleep time is the current year
+    :return: the last sleep time. datetime.datetime.min if unable to find the last sleep time.
+    """
+    try:
+        sleep_entry_entries = subprocess.check_output(
+            'grep -E "PM: suspend entry" /var/log/syslog; exit 0',
+            shell=True
+        ).decode()
+    except subprocess.CalledProcessError:
+        last_sleep_entry = datetime.datetime.min
+    else:
+        sleep_entry_entries = sleep_entry_entries.split('\n')[:-1]
+        last_sleep_entry = sleep_entry_entries[-1].split()
+        month_date_time = " ".join(last_sleep_entry[0:3])
+        last_sleep_entry = datetime.datetime.strptime(month_date_time, "%b %d %H:%M:%S")
+        last_sleep_entry.replace(year=datetime.date.today().year)
+    return last_sleep_entry
+
+
 def connected_to_wifi(ssid: str) -> bool:
     """
     checks whether the device is connected to wifi using linux's nmcli command.
@@ -438,11 +462,14 @@ def check_connected_to_internetV2(
         :return: int, 0 or 1
         """
 
-        return int(
-            subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
-            .decode()
-            .strip("\n")
-        )
+        try:
+            result = int(
+            subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"]).decode().strip("\n")
+            )
+        except subprocess.CalledProcessError:
+            result = subprocess.check_output(["cat", f"/sys/class/net/{card_name}/operstate"]).decode().strip("\n")
+            result = 1 if result == 'up' else 0
+        return result
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
     wired = [e for e in network_devices if e[0] == "e"]
@@ -506,6 +533,8 @@ def suspend_thread_until(time: datetime.timedelta):
     :return: None
     """
     time_to_wake_up = time - get_current_time_delta()
+    if time_to_wake_up < datetime.timedelta(seconds=0):
+        time_to_wake_up += datetime.timedelta(hours=24)
 
     logger.debug(
         "Sleeping the program until %s for duration %s...",
@@ -807,9 +836,13 @@ if __name__ == "__main__":
             )
             wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
             logger.info(
-                "Internet back up! will resume the program at: %s", wake_up_print
+                "Internet back up! will resume the program at: %s", repr_time_delta(NIGHT_PHASE['start time'])
             )
             alert_onTelegram(
-                "Hello There!\nToday the internet came back quite early.\nLast sleep time: "
-                f"{LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}"
+                "Hello There!\nToday the internet came back quite early.\nLast sleep time: `{}`".format(
+                    LAST_SLEEP_TIME.strftime('%b %d %H:%M:%S')
+                    if LAST_SLEEP_TIME != datetime.datetime.min
+                    else 'NEVER'
+                )
             )
+            suspend_thread_until(NIGHT_PHASE['start time'])
