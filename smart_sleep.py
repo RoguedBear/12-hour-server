@@ -364,8 +364,8 @@ def get_nearest_phase(
         """
         return dict_[key] - now
 
-    # logger.debug("%s\t%s", args, list(map(key_function, args)))
-    answer = max(args, key=key_function)
+    logger.debug("%s\n\t%s", args, list(map(key_function, args)))
+    answer = min(args, key=key_function)
     return answer["name"], answer["start time"] - now
 
 
@@ -511,11 +511,7 @@ def suspend_thread_until(time: datetime.timedelta):
     """
     time_to_wake_up = time - get_current_time_delta()
 
-    wake_up_print = datetime.datetime.combine(
-        datetime.datetime.today().date(), (datetime.datetime.min + time).time()
-    )
-    wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
-    logger.debug("Sleeping the program until %s...", wake_up_print)
+    logger.debug("Sleeping the program until %s for duration %s...", repr_time_delta(time), str(time_to_wake_up))
     sleep(time_to_wake_up.total_seconds())
     # extra delay seconds
     sleep(1)
@@ -580,6 +576,7 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
 def wait_for_connectivity_to_change_to(
         req_connection_status: Literal["connected", "disconnected"],
         action: Literal["suspend", "sleep"],
+        start_time: datetime.timedelta ,
         end_time: datetime.timedelta,
         timeout: int = TIMEOUT
 ) -> bool:
@@ -595,6 +592,7 @@ def wait_for_connectivity_to_change_to(
     If computer/server is connected to the internet, then function will run until the connection drops
     :param req_connection_status: the connection stage to wait
     :param action: sleep/suspend the computer/thread when waiting for TIMEOUT duration to check for connectivity changes
+    :param start_time: the starting time of the current phase
     :param end_time: the time till the function should check for connection changes
     :param timeout: *Optional. to change the timeout duration for checking just in case.
     :return: True/False if connection changed to what was asked
@@ -603,7 +601,12 @@ def wait_for_connectivity_to_change_to(
     con_val = {"connected": True, "disconnected": False}
     # We start with an infinite loop.
     logger.info("Waiting for connectivity to change to '%s'...", req_connection_status)
-    while get_current_time_delta() < end_time:
+    # PRocess end_time to account for cur_time < 12am but end_time > 12am
+    phase = {
+        'start time': start_time,
+        'end time': end_time,
+    }
+    while current_time_within_time_range(phase):
         # We check now the status of internet connection.
         status, _ = check_connected_to_internetV2(CONNECTION_TYPE)
 
@@ -616,6 +619,8 @@ def wait_for_connectivity_to_change_to(
         # If the internet status is not what is required, then we just wait for TIMEOUT duration and check back
         # again
         else:
+            # refresh timeout
+            timeout = TIMEOUT
             sleep_or_suspend_until(timeout, action)
             continue
     return False
@@ -717,12 +722,12 @@ if __name__ == "__main__":
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
             if abs(get_current_time_delta() - NIGHT_PHASE['end time']) <= datetime.timedelta(seconds=TIMEOUT):
-                go_to_sleep = wait_for_connectivity_to_change_to('disconnected', 'suspend', NIGHT_PHASE['end time'], 60)
+                go_to_sleep = wait_for_connectivity_to_change_to('disconnected', 'suspend',NIGHT_PHASE['start time'] ,NIGHT_PHASE['end time'], 60)
 
             # Otherwise passively check for connectivity changes till
             else:
                 go_to_sleep = wait_for_connectivity_to_change_to(
-                    'disconnected', 'suspend', NIGHT_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT)
+                    'disconnected', 'suspend', NIGHT_PHASE['start time'] ,NIGHT_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT)
                 )
 
         # Check if we're in MORNING PHASE now
@@ -730,10 +735,10 @@ if __name__ == "__main__":
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} morning phase.")
             # Check if we're nearing the end time. ig yes, then check vigorously
             if abs(get_current_time_delta() - MORNING_PHASE['end time'] <= datetime.timedelta(seconds=TIMEOUT)):
-                be_awake = wait_for_connectivity_to_change_to('connected', 'suspend', MORNING_PHASE['end time'], 60)
+                be_awake = wait_for_connectivity_to_change_to('connected', 'suspend',MORNING_PHASE['start time'] ,MORNING_PHASE['end time'], 60)
             else:
                 be_awake = wait_for_connectivity_to_change_to(
-                    'connected', 'sleep', MORNING_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT)
+                    'connected', 'sleep',MORNING_PHASE['start time'], MORNING_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT)
                 )
 
         # here we see which phase is the nearest to us and take actions accordingly
