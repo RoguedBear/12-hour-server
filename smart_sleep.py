@@ -467,12 +467,14 @@ def check_connected_to_internetV2(
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
 
 
+# noinspection PyShadowingNames
 def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
     """
     sleeps the computer when func is executed and sets the wake timer till `time` seconds using rtcwake
     Assumes the time is greater than `now` time.
     :param time: the datetime.timedelta object of the time you need the computer to wake up at
     :return: None
+    :param debug: true to debug and not make the computer sleep but just display the waketimer in stdout
     Raises a ValueError if time is less than current time
     """
     # get the time in seconds left until wake time
@@ -483,11 +485,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
         raise ValueError("Given time passed in as argument has already passed!")
 
     # now we go schleep schleep
-    wake_up_print = datetime.datetime.combine(
-        datetime.datetime.today().date(), (datetime.datetime.min + time).time()
-    )
-    wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
-    logger.info("Going schleep schleep, and will wake up at %s.", wake_up_print)
+    logger.info("Going schleep schleep, and will wake up at %s.", repr_time_delta(time))
     if not debug:
         output = subprocess.check_output(
             ["sudo", "rtcwake", "-m", "mem", "-s", str(time_to_wake_up.seconds)]
@@ -580,7 +578,7 @@ def wait_for_connectivity_to_change_to(
     action: Literal["suspend", "sleep"],
     start_time: datetime.timedelta,
     end_time: datetime.timedelta,
-    timeout: int = TIMEOUT,
+    timeout: int = -1,
 ) -> bool:
     """
     This function is partly big brain logic.
@@ -622,7 +620,7 @@ def wait_for_connectivity_to_change_to(
         # again
         else:
             # refresh timeout
-            timeout = TIMEOUT
+            timeout = TIMEOUT if timeout == -1 else timeout
             sleep_or_suspend_until(timeout, action)
             continue
     return False
@@ -785,7 +783,8 @@ if __name__ == "__main__":
                 while True:
                     try:
                         alert_onTelegram(
-                            f"Computer is awake, and internet is back up at this time.\nLast sleep time: `{LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}`"
+                            "Computer is awake, and internet is back up at this time.\nLast sleep time: "
+                            f"`{LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}` "
                         )
                         break
                     except requests.exceptions.ConnectionError:
@@ -811,5 +810,6 @@ if __name__ == "__main__":
                 "Internet back up! will resume the program at: %s", wake_up_print
             )
             alert_onTelegram(
-                f"Hello There!\nToday the internet came back quite early.\nLast sleep time: {LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}"
+                "Hello There!\nToday the internet came back quite early.\nLast sleep time: "
+                f"{LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}"
             )
