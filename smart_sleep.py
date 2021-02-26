@@ -14,7 +14,7 @@ from typing import Literal, Tuple, Dict
 # program constants
 CHAT_ID = ""
 BOT_TOKEN = ""
-CONNECTION_TYPE: Literal['any', 'wired', 'wireless'] = "any"
+CONNECTION_TYPE: Literal["any", "wired", "wireless"] = "any"
 NIGHT_PHASE = None
 MORNING_PHASE = None
 TIMEOUT = 500
@@ -493,7 +493,7 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
     logger.debug(
         "%s is awake now, suspending the thread for %d more seconds...",
         "computer" if mode == "sleep" else "program",
-        DELAY
+        DELAY,
     )
     sleep(DELAY)
 
@@ -524,7 +524,10 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
 """
 
 
-def wait_for_connectivity_to_change_to(req_connection_status: Literal['connected', 'disconnected'], action: Literal['suspend', 'sleep']) -> Literal[True]:
+def wait_for_connectivity_to_change_to(
+    req_connection_status: Literal["connected", "disconnected"],
+    action: Literal["suspend", "sleep"],
+) -> Literal[True]:
     """
     This function is partly big brain logic.
     It will take in two arguments. one to check what part to respond to. either disconnection from internet, or
@@ -539,10 +542,7 @@ def wait_for_connectivity_to_change_to(req_connection_status: Literal['connected
     :return: 1
     """
     # convert connection types to a boolean dictionary
-    con_val = {
-        'connected': True,
-        'disconnected': False
-    }
+    con_val = {"connected": True, "disconnected": False}
     # We start with an infinite loop.
     logger.info("Waiting for connectivity to change too %s...", req_connection_status)
     while True:
@@ -551,8 +551,8 @@ def wait_for_connectivity_to_change_to(req_connection_status: Literal['connected
 
         # Now check if the internet status is the same as required status' boolean value
         if status == con_val[req_connection_status]:
-            old = 'connected' if con_val[req_connection_status] else 'disconnected'
-            new = 'connected' if status else 'disconnected'
+            old = "connected" if con_val[req_connection_status] else "disconnected"
+            new = "connected" if status else "disconnected"
             logger.info("Connection status has been changed! (%s -> %s)", old, new)
             return True
         # If the internet status is not what is required, then we just wait for TIMEOUT duration and check back
@@ -586,7 +586,7 @@ if __name__ == "__main__":
 
         print(get_nearest_phase(MORNING_PHASE, NIGHT_PHASE))
 
-        sleep_or_suspend_until(10, 'suspend')
+        sleep_or_suspend_until(10, "suspend")
 
     # The main big brain logic of the program
     """Pseudocode:
