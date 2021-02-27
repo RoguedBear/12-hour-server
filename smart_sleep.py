@@ -519,9 +519,10 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
     # get the time in seconds left until wake time
     time_to_wake_up = time - get_current_time_delta()
 
-    # check if time isn't negative
-    if time_to_wake_up.total_seconds() <= 0:
-        raise ValueError("Given time passed in as argument has already passed!")
+    # # check if time isn't negative
+    # if time_to_wake_up.total_seconds() <= 0:
+    if time_to_wake_up < datetime.timedelta(seconds=0):
+        time_to_wake_up += datetime.timedelta(hours=24)
 
     # now we go schleep schleep
     logger.info("Going schleep schleep, and will wake up at %s.", repr_time_delta(time))
@@ -664,6 +665,7 @@ def wait_for_connectivity_to_change_to(
             timeout = TIMEOUT if timeout == -1 else timeout
             sleep_or_suspend_until(timeout, action)
             continue
+    logger.info("Connectivity did not change in the specified time.")
     return False
 
 
@@ -716,7 +718,9 @@ if __name__ == "__main__":
     * if we're in neither phase (possibly cuz you ran the program at your own will), suspend the thread if nearest is 
       NIGHT, else sleep if the nearest is morning
     """
-    config_loader()
+    config_data = config_loader()
+    logging_level = config_data.get('logging level', 10)
+    logger.setLevel(logging_level)
     # Alright, let's start.
     while True:
         go_to_sleep = False
@@ -727,9 +731,12 @@ if __name__ == "__main__":
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} night phase")
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
-            if abs(
-                get_current_time_delta() - NIGHT_PHASE["end time"]
-            ) <= datetime.timedelta(seconds=TIMEOUT):
+            if current_time_within_time_range(
+                    {
+                        'start time': NIGHT_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT),
+                        'end time': NIGHT_PHASE['end time'],
+                    }
+            ):
                 go_to_sleep = wait_for_connectivity_to_change_to(
                     "disconnected",
                     "suspend",
@@ -751,9 +758,12 @@ if __name__ == "__main__":
         elif current_time_within_time_range(MORNING_PHASE):
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} morning phase.")
             # Check if we're nearing the end time. ig yes, then check vigorously
-            if abs(
-                get_current_time_delta() - MORNING_PHASE["end time"]
-                <= datetime.timedelta(seconds=TIMEOUT)
+
+            if current_time_within_time_range(
+                    {
+                        'start time': MORNING_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT),
+                        'end time': MORNING_PHASE['end time'],
+                    }
             ):
                 be_awake = wait_for_connectivity_to_change_to(
                     "connected",
@@ -801,7 +811,11 @@ if __name__ == "__main__":
         # If the internet goes out early
         if go_to_sleep:
             logger.info(
-                "Internet went down early than the 'end time'. going to sleep until.."
+                "Internet went down early than the 'end time'. going to sleep until %s...",
+                repr_time_delta(
+                    MORNING_PHASE['start time'] if get_current_time_delta() < MORNING_PHASE['start time']
+                    else MORNING_PHASE['start time'] + datetime.timedelta(hours=24)
+                )
             )
             # LAST_SLEEP_TIME = datetime.datetime.now()
             sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
