@@ -19,6 +19,8 @@ NIGHT_PHASE: dict = dict()
 MORNING_PHASE: dict = dict()
 TIMEOUT = 500
 
+# This controls whether the computer sleeps for real or not. change it acc to your needs
+DEBUG = False
 # Logging formatter
 FORMATTER = {
     "format": "{color}[{asctime}] :--{levelname:-^9s}--: [{funcName}()] {message}",
@@ -574,7 +576,7 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
     if mode == "suspend":
         suspend_thread_until(time)
     elif mode == "sleep":
-        sleep_computer_but_wake_at(time, debug=True)
+        sleep_computer_but_wake_at(time, debug=DEBUG)
     else:
         logger.error(
             "'%s' is not a valid argument for parameter 'mode'. 'mode' can either be 'sleep' or 'suspend'",
@@ -682,19 +684,20 @@ def wait_for_connectivity_to_change_to(
 
 if __name__ == "__main__":
     LAST_SLEEP_TIME = get_last_sleep_time()
-    debug = True
-    if not debug:
-        config_loader()
-        logger.debug("Testing check_connected_to_internetV2() function:")
-        logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
-
-        # test sleep function
-        delta = get_current_time_delta() + datetime.timedelta(seconds=10)
-        # sleep_computer_but_wake_at(delta, debug=True)
-
-        print(get_nearest_phaseV2(MORNING_PHASE, NIGHT_PHASE))
-
-        sleep_or_suspend_until(10, "suspend")
+    LAST_SLEEP_TIME_byProgram = datetime.datetime.min
+    debug = False
+    # if debug:
+    #     config_loader()
+    #     logger.debug("Testing check_connected_to_internetV2() function:")
+    #     logger.debug("Result:" + Fore.CYAN + str(check_connected_to_internetV2()))
+    #
+    #     # test sleep function
+    #     delta = get_current_time_delta() + datetime.timedelta(seconds=10)
+    #     # sleep_computer_but_wake_at(delta, debug=True)
+    #
+    #     print(get_nearest_phaseV2(MORNING_PHASE, NIGHT_PHASE))
+    #
+    #     sleep_or_suspend_until(10, "suspend")
 
     # The main big brain logic of the program
     """Pseudocode:
@@ -793,6 +796,7 @@ if __name__ == "__main__":
                     "NIGHT PHASE has passed. Computer is going to sleep until: %s",
                     repr_time_delta(MORNING_PHASE["start time"]),
                 )
+                LAST_SLEEP_TIME_byProgram = datetime.datetime.now()
                 sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
             elif nearest_phase[0] == "NIGHT PHASE":
                 logger.info(
@@ -821,6 +825,7 @@ if __name__ == "__main__":
                 ),
             )
             # LAST_SLEEP_TIME = datetime.datetime.now()
+            LAST_SLEEP_TIME_byProgram = datetime.datetime.now()
             sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
             LAST_SLEEP_TIME = get_last_sleep_time()
 
@@ -832,9 +837,9 @@ if __name__ == "__main__":
             )
             alert_onTelegram(
                 "Hello There!\nToday the internet came back quite early.\nLast sleep time: `{}`".format(
-                    LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
-                    if LAST_SLEEP_TIME != datetime.datetime.min
-                    else "NEVER"
+                    LAST_SLEEP_TIME_byProgram.strftime("%b %d %H:%M:%S")
+                    if LAST_SLEEP_TIME_byProgram != datetime.datetime.min
+                    else LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
                 )
             )
             suspend_thread_until(NIGHT_PHASE["start time"])
