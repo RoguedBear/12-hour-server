@@ -5,7 +5,7 @@
 
 > a python script to put the home "server" to sleep when wifi is disconnected at night, and wake up early the next day
 
-Note: This script will only run on Linux (more specifically for Ubuntu/Debian). **WILL NOT RUN ON WINDOWS**
+Note: This script will only run on Linux (more specifically on Ubuntu/Debian). **WILL NOT RUN ON WINDOWS**
 
 ## What does this script do?
 
