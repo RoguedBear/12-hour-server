@@ -842,4 +842,4 @@ if __name__ == "__main__":
                     else LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
                 )
             )
-            suspend_thread_until(NIGHT_PHASE['start time'])
+            suspend_thread_until(NIGHT_PHASE["start time"])
