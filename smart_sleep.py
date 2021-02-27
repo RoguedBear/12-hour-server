@@ -719,7 +719,7 @@ if __name__ == "__main__":
       NIGHT, else sleep if the nearest is morning
     """
     config_data = config_loader()
-    logging_level = config_data.get('logging level', 10)
+    logging_level = config_data.get("logging level", 10)
     logger.setLevel(logging_level)
     # Alright, let's start.
     while True:
@@ -732,10 +732,11 @@ if __name__ == "__main__":
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
             if current_time_within_time_range(
-                    {
-                        'start time': NIGHT_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT),
-                        'end time': NIGHT_PHASE['end time'],
-                    }
+                {
+                    "start time": NIGHT_PHASE["end time"]
+                    - datetime.timedelta(seconds=TIMEOUT),
+                    "end time": NIGHT_PHASE["end time"],
+                }
             ):
                 go_to_sleep = wait_for_connectivity_to_change_to(
                     "disconnected",
@@ -760,10 +761,11 @@ if __name__ == "__main__":
             # Check if we're nearing the end time. ig yes, then check vigorously
 
             if current_time_within_time_range(
-                    {
-                        'start time': MORNING_PHASE['end time'] - datetime.timedelta(seconds=TIMEOUT),
-                        'end time': MORNING_PHASE['end time'],
-                    }
+                {
+                    "start time": MORNING_PHASE["end time"]
+                    - datetime.timedelta(seconds=TIMEOUT),
+                    "end time": MORNING_PHASE["end time"],
+                }
             ):
                 be_awake = wait_for_connectivity_to_change_to(
                     "connected",
@@ -813,9 +815,10 @@ if __name__ == "__main__":
             logger.info(
                 "Internet went down early than the 'end time'. going to sleep until %s...",
                 repr_time_delta(
-                    MORNING_PHASE['start time'] if get_current_time_delta() < MORNING_PHASE['start time']
-                    else MORNING_PHASE['start time'] + datetime.timedelta(hours=24)
-                )
+                    MORNING_PHASE["start time"]
+                    if get_current_time_delta() < MORNING_PHASE["start time"]
+                    else MORNING_PHASE["start time"] + datetime.timedelta(hours=24)
+                ),
             )
             # LAST_SLEEP_TIME = datetime.datetime.now()
             sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
