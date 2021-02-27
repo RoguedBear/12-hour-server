@@ -1,13 +1,13 @@
 # 12-hour-server
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-------
+
 
 > a python script to put the home "server" to sleep when wifi is disconnected at night, and wake up early the next day
 
 ## What does this script do?
 
----
+
 if you have an old computer/laptop you use as your home server, 
 but don't quite want it to run 24x7, but rather only when your internet (router) is active.
 
@@ -47,10 +47,18 @@ This is what this program does.
 - Install requirements.txt: `pip install -r requirements.txt`
 - Run `./smart_sleep.py` from repository root. Make sure you have python3.8+ \
 **Note: Program will run as [sudo] because the underlying command `rtcwake` which sets waketimers needs [sudo] to run**
-  
+
+## Viewing logs
+
+
+The program creates 2 log files. one containing the normal logs (`logs.log`), and the other containing the ANSI color codes (`logs_color.log`)
+If you want to see the logs of this program by ssh-ing into the server computer, then there are 2 ways for that:
+1) [To view logs with color] `less -R +F Path_to_repository_root/logs_color.log`
+2) [To view plain logs without color] `tail -f Path_to_repository_root/logs.log`
+
 ## Reporting Issues:
 
----
+
 I haven't polished the program and fixed every bug because i needed this script to be made fast according to my needs.
 If you encounter any bugs, feel free to open an issue or a pull request.
 
@@ -58,7 +66,7 @@ If you encounter any bugs, feel free to open an issue or a pull request.
 
 ## Known issue:
 
----
+
 
 - the timings are right, but the date could be off. since im using `timedelta` instead of `time` or `datetime`.
 too far into the project, not gonna bother changing it until i get an issue or pull request about it 
