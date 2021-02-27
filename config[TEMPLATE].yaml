@@ -1,0 +1,19 @@
+# wired, wireless, any: connection type you want the program to check for internet connectivity
+connection type: any
+
+# Provide time in 24hr format
+night phase:
+  start time: 23:20
+  end time: 23:40
+morning phase:
+  start time: 8:30
+  end time: 10:30
+
+# This timeout will be used to wait for internet to go out, and also to wait for internet to come back in
+timeout: 90
+logging level: 10 # 10 for DEBUG, 20 for INFO, 30 for WARNING, 40 for ERROR, 50 for CRITICAL logging level
+
+# Optional
+telegram:
+  BOT_TOKEN: YOUR TOKEN HERE
+  CHAT_ID: YOUR CHAT ID HERE
