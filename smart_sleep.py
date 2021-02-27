@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/sudo python3.8
 # TODO: add tails -f log.log or less -R +F log.log in the readme
 # TODO: add code style badge in README
 import datetime
@@ -143,7 +143,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-            isinstance(TIMEOUT, int) is True
+                isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -210,7 +210,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + str(CHAT_ID)
             + "&parse_mode=Markdown"
-            "&text=" + message[:1000]
+              "&text=" + message[:1000]
         )
         logger.debug(x)
 
@@ -344,7 +344,7 @@ def current_time_within_time_range(phase: dict) -> bool:
 
 
 def get_nearest_phase(
-    *args, key: Literal["start time", "end time"] = "start time"
+        *args, key: Literal["start time", "end time"] = "start time"
 ) -> Tuple[str, datetime.timedelta]:
     """
     This function will return the phase which is nearest to the current time.
@@ -442,7 +442,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+        connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -490,6 +490,8 @@ def check_connected_to_internetV2(
             logger.debug(
                 f"Device: {Fore.CYAN + card + Fore.WHITE} is connected to internet"
             )
+    if not DEVICE_CONNECTED:
+        logger.debug("No device connected to internet. Computer is currently %sOFFLINE", Fore.YELLOW)
 
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
 
@@ -519,7 +521,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
         )
     else:
         output = subprocess.check_output(
-            ["sudo", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
+            ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
         )
     logger.debug(output.decode())
     sleep(0.5)
@@ -603,11 +605,11 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
 
 
 def wait_for_connectivity_to_change_to(
-    req_connection_status: Literal["connected", "disconnected"],
-    action: Literal["suspend", "sleep"],
-    start_time: datetime.timedelta,
-    end_time: datetime.timedelta,
-    timeout: int = -1,
+        req_connection_status: Literal["connected", "disconnected"],
+        action: Literal["suspend", "sleep"],
+        start_time: datetime.timedelta,
+        end_time: datetime.timedelta,
+        timeout: int = -1,
 ) -> bool:
     """
     This function is partly big brain logic.
@@ -623,7 +625,7 @@ def wait_for_connectivity_to_change_to(
     :param action: sleep/suspend the computer/thread when waiting for TIMEOUT duration to check for connectivity changes
     :param start_time: the starting time of the current phase
     :param end_time: the time till the function should check for connection changes
-    :param timeout: *Optional. to change the timeout duration for checking just in case.
+    :param timeout: *Optional. -1 by default to use the default TIMEOUT. otherwise specify timeout
     :return: True/False if connection changed to what was asked
     """
     # convert connection types to a boolean dictionary
@@ -641,7 +643,7 @@ def wait_for_connectivity_to_change_to(
 
         # Now check if the internet status is the same as required status' boolean value
         if status == con_val[req_connection_status]:
-            old = "connected" if con_val[req_connection_status] else "disconnected"
+            old = "disconnected" if con_val[req_connection_status] else "connected"
             new = "connected" if status else "disconnected"
             logger.info("Connection status has been changed! (%s -> %s)", old, new)
             return True
@@ -653,41 +655,6 @@ def wait_for_connectivity_to_change_to(
             sleep_or_suspend_until(timeout, action)
             continue
     return False
-
-
-def wait_for_connectivity_to_change_to_LITE(
-    req_connection_status: Literal["connected", "disconnected"],
-) -> bool:
-    """
-    THIS FUNCTION DOES NO WHILE LOOP. IT JUST CHECKS, and RETURNS the value
-    This function is partly big brain logic.
-    It will take in two arguments. one to check what part to respond to. either disconnection from internet, or
-    connection to internet
-    the second argument will tell whether to suspend the thread or sleep the computer if status of connectivity remains
-    same.
-    This function will keep on running until the connectivity becomes what was specified. eg: if wait for
-    connection, then function will continue until computer connects to internet
-    if wait for disconnection, then program will continue until the connectivity drops
-    If computer/server is connected to the internet, then function will run until the connection drops
-    :param req_connection_status: the connection stage to wait
-    :return: 1
-    """
-    # convert connection types to a boolean dictionary
-    con_val = {"connected": True, "disconnected": False}
-    # We start with an infinite loop.
-    # We check now the status of internet connection.
-    status, _ = check_connected_to_internetV2(CONNECTION_TYPE)
-
-    # Now check if the internet status is the same as required status' boolean value
-    if status == con_val[req_connection_status]:
-        old = "connected" if con_val[req_connection_status] else "disconnected"
-        new = "connected" if status else "disconnected"
-        logger.info("Connection status has been changed! (%s -> %s)", old, new)
-        return True
-    # If the internet status is not what is required, then we just wait for TIMEOUT duration and check back
-    # again
-    else:
-        return False
 
 
 """
@@ -702,7 +669,7 @@ def wait_for_connectivity_to_change_to_LITE(
 """
 
 if __name__ == "__main__":
-    LAST_SLEEP_TIME = datetime.datetime.min
+    LAST_SLEEP_TIME = get_last_sleep_time()
     debug = True
     if not debug:
         config_loader()
@@ -751,7 +718,7 @@ if __name__ == "__main__":
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
             if abs(
-                get_current_time_delta() - NIGHT_PHASE["end time"]
+                    get_current_time_delta() - NIGHT_PHASE["end time"]
             ) <= datetime.timedelta(seconds=TIMEOUT):
                 go_to_sleep = wait_for_connectivity_to_change_to(
                     "disconnected",
@@ -775,8 +742,8 @@ if __name__ == "__main__":
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} morning phase.")
             # Check if we're nearing the end time. ig yes, then check vigorously
             if abs(
-                get_current_time_delta() - MORNING_PHASE["end time"]
-                <= datetime.timedelta(seconds=TIMEOUT)
+                    get_current_time_delta() - MORNING_PHASE["end time"]
+                    <= datetime.timedelta(seconds=TIMEOUT)
             ):
                 be_awake = wait_for_connectivity_to_change_to(
                     "connected",
@@ -801,7 +768,8 @@ if __name__ == "__main__":
             # If nearest phase is MORNING_PHASE then sleep the computer until morning phase
             if nearest_phase[0] == "MORNING PHASE":
                 logger.info(
-                    "NIGHT PHASE has passed. Computer is going to sleep until: "
+                    "NIGHT PHASE has passed. Computer is going to sleep until: %s",
+                    repr_time_delta(MORNING_PHASE['start time'])
                 )
                 sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
             elif nearest_phase[0] == "NIGHT PHASE":
@@ -813,7 +781,7 @@ if __name__ == "__main__":
                     try:
                         alert_onTelegram(
                             "Computer is awake, and internet is back up at this time.\nLast sleep time: "
-                            f"`{LAST_SLEEP_TIME.strftime('%d/%b/%Y %H:%M:%S')}` "
+                            f"`{LAST_SLEEP_TIME.strftime('%b %d %H:%M:%S')}` "
                         )
                         break
                     except requests.exceptions.ConnectionError:
@@ -825,16 +793,12 @@ if __name__ == "__main__":
             logger.info(
                 "Internet went down early than the 'end time'. going to sleep until.."
             )
-            LAST_SLEEP_TIME = datetime.datetime.now()
+            # LAST_SLEEP_TIME = datetime.datetime.now()
             sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
+            LAST_SLEEP_TIME = get_last_sleep_time()
 
         # If internet comes back in early
         if be_awake:
-            wake_up_print = datetime.datetime.combine(
-                datetime.datetime.today().date(),
-                (datetime.datetime.min + NIGHT_PHASE["start time"]).time(),
-            )
-            wake_up_print = wake_up_print.strftime("%d/%b/%Y %H:%M:%S")
             logger.info(
                 "Internet back up! will resume the program at: %s", repr_time_delta(NIGHT_PHASE['start time'])
             )
