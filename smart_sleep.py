@@ -143,7 +143,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
     try:
         TIMEOUT = config["timeout"]
         assert (
-                isinstance(TIMEOUT, int) is True
+            isinstance(TIMEOUT, int) is True
         ), f"TIMEOUT not of correct type.\n Expected type int, got {type(TIMEOUT)}"
     except KeyError:
         logger.debug("timeout key not found. will use default")
@@ -210,7 +210,7 @@ def alert_onTelegram(message: str):
             + "/sendMessage?chat_id="
             + str(CHAT_ID)
             + "&parse_mode=Markdown"
-              "&text=" + message[:1000]
+            "&text=" + message[:1000]
         )
         logger.debug(x)
 
@@ -344,7 +344,7 @@ def current_time_within_time_range(phase: dict) -> bool:
 
 
 def get_nearest_phase(
-        *args, key: Literal["start time", "end time"] = "start time"
+    *args, key: Literal["start time", "end time"] = "start time"
 ) -> Tuple[str, datetime.timedelta]:
     """
     This function will return the phase which is nearest to the current time.
@@ -415,13 +415,12 @@ def get_last_sleep_time() -> datetime.datetime:
     """
     try:
         sleep_entry_entries = subprocess.check_output(
-            'grep -E "PM: suspend entry" /var/log/syslog; exit 0',
-            shell=True
+            'grep -E "PM: suspend entry" /var/log/syslog; exit 0', shell=True
         ).decode()
     except subprocess.CalledProcessError:
         last_sleep_entry = datetime.datetime.min
     else:
-        sleep_entry_entries = sleep_entry_entries.split('\n')[:-1]
+        sleep_entry_entries = sleep_entry_entries.split("\n")[:-1]
         last_sleep_entry = sleep_entry_entries[-1].split()
         month_date_time = " ".join(last_sleep_entry[0:3])
         last_sleep_entry = datetime.datetime.strptime(month_date_time, "%b %d %H:%M:%S")
@@ -442,7 +441,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-        connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any"
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -464,11 +463,19 @@ def check_connected_to_internetV2(
 
         try:
             result = int(
-            subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"]).decode().strip("\n")
+                subprocess.check_output(["cat", f"/sys/class/net/{card_name}/carrier"])
+                .decode()
+                .strip("\n")
             )
         except subprocess.CalledProcessError:
-            result = subprocess.check_output(["cat", f"/sys/class/net/{card_name}/operstate"]).decode().strip("\n")
-            result = 1 if result == 'up' else 0
+            result = (
+                subprocess.check_output(
+                    ["cat", f"/sys/class/net/{card_name}/operstate"]
+                )
+                .decode()
+                .strip("\n")
+            )
+            result = 1 if result == "up" else 0
         return result
 
     network_devices = subprocess.check_output(["ls", "/sys/class/net"]).decode().split()
@@ -491,7 +498,10 @@ def check_connected_to_internetV2(
                 f"Device: {Fore.CYAN + card + Fore.WHITE} is connected to internet"
             )
     if not DEVICE_CONNECTED:
-        logger.debug("No device connected to internet. Computer is currently %sOFFLINE", Fore.YELLOW)
+        logger.debug(
+            "No device connected to internet. Computer is currently %sOFFLINE",
+            Fore.YELLOW,
+        )
 
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
 
@@ -605,11 +615,11 @@ def sleep_or_suspend_until(time: int, mode: Literal["suspend", "sleep"]):
 
 
 def wait_for_connectivity_to_change_to(
-        req_connection_status: Literal["connected", "disconnected"],
-        action: Literal["suspend", "sleep"],
-        start_time: datetime.timedelta,
-        end_time: datetime.timedelta,
-        timeout: int = -1,
+    req_connection_status: Literal["connected", "disconnected"],
+    action: Literal["suspend", "sleep"],
+    start_time: datetime.timedelta,
+    end_time: datetime.timedelta,
+    timeout: int = -1,
 ) -> bool:
     """
     This function is partly big brain logic.
@@ -718,7 +728,7 @@ if __name__ == "__main__":
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
             if abs(
-                    get_current_time_delta() - NIGHT_PHASE["end time"]
+                get_current_time_delta() - NIGHT_PHASE["end time"]
             ) <= datetime.timedelta(seconds=TIMEOUT):
                 go_to_sleep = wait_for_connectivity_to_change_to(
                     "disconnected",
@@ -742,8 +752,8 @@ if __name__ == "__main__":
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} morning phase.")
             # Check if we're nearing the end time. ig yes, then check vigorously
             if abs(
-                    get_current_time_delta() - MORNING_PHASE["end time"]
-                    <= datetime.timedelta(seconds=TIMEOUT)
+                get_current_time_delta() - MORNING_PHASE["end time"]
+                <= datetime.timedelta(seconds=TIMEOUT)
             ):
                 be_awake = wait_for_connectivity_to_change_to(
                     "connected",
@@ -769,7 +779,7 @@ if __name__ == "__main__":
             if nearest_phase[0] == "MORNING PHASE":
                 logger.info(
                     "NIGHT PHASE has passed. Computer is going to sleep until: %s",
-                    repr_time_delta(MORNING_PHASE['start time'])
+                    repr_time_delta(MORNING_PHASE["start time"]),
                 )
                 sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
             elif nearest_phase[0] == "NIGHT PHASE":
@@ -800,13 +810,14 @@ if __name__ == "__main__":
         # If internet comes back in early
         if be_awake:
             logger.info(
-                "Internet back up! will resume the program at: %s", repr_time_delta(NIGHT_PHASE['start time'])
+                "Internet back up! will resume the program at: %s",
+                repr_time_delta(NIGHT_PHASE["start time"]),
             )
             alert_onTelegram(
                 "Hello There!\nToday the internet came back quite early.\nLast sleep time: `{}`".format(
-                    LAST_SLEEP_TIME.strftime('%b %d %H:%M:%S')
+                    LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
                     if LAST_SLEEP_TIME != datetime.datetime.min
-                    else 'NEVER'
+                    else "NEVER"
                 )
             )
-            suspend_thread_until(NIGHT_PHASE['start time'])
+            suspend_thread_until(NIGHT_PHASE["start time"])
