@@ -538,7 +538,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
         )
     logger.debug(output.decode())
     sleep(0.5)
-    logger.info('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
+    logger.debug('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
 
 
 def suspend_thread_until(time: datetime.timedelta):
