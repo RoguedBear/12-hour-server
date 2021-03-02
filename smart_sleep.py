@@ -538,7 +538,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
         )
     logger.debug(output.decode())
     sleep(0.5)
-    logger.debug('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
+    logger.info('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
 
 
 def suspend_thread_until(time: datetime.timedelta):
@@ -835,11 +835,16 @@ if __name__ == "__main__":
                 "Internet back up! will resume the program at: %s",
                 repr_time_delta(NIGHT_PHASE["start time"]),
             )
-            alert_onTelegram(
-                "Hello There!\nToday the internet came back quite early.\nLast sleep time: `{}`".format(
-                    LAST_SLEEP_TIME_byProgram.strftime("%b %d %H:%M:%S")
-                    if LAST_SLEEP_TIME_byProgram != datetime.datetime.min
-                    else LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
-                )
-            )
+            while True:
+                try:
+                    alert_onTelegram(
+                        "Hello There!\nToday the internet came back quite early.\nLast sleep time: `{}`".format(
+                            LAST_SLEEP_TIME_byProgram.strftime("%b %d %H:%M:%S")
+                            if LAST_SLEEP_TIME_byProgram != datetime.datetime.min
+                            else LAST_SLEEP_TIME.strftime("%b %d %H:%M:%S")
+                        )
+                    )
+                    break
+                except Exception:
+                    continue
             suspend_thread_until(NIGHT_PHASE["start time"])
