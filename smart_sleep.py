@@ -731,12 +731,14 @@ def wait_for_connectivity_to_change_to(
 
 if __name__ == "__main__":
 
-    print("""
+    print(
+        """
     12-hour-server/smart_sleep  Copyright (C) 2021  Roguedbear
     This program comes with ABSOLUTELY NO WARRANTY.
     This is free software, and you are welcome to redistribute it
     under certain conditions
-    """)
+    """
+    )
     sleep(2)
 
     LAST_SLEEP_TIME = get_last_sleep_time()
