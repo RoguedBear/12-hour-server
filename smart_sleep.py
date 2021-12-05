@@ -18,6 +18,7 @@ CONNECTION_TYPE: Literal["any", "wired", "wireless"] = "any"
 NIGHT_PHASE: dict = dict()
 MORNING_PHASE: dict = dict()
 TIMEOUT = 500
+SLEEP_INTERVAL = 0 # 0 means disabled
 
 # This controls whether the computer sleeps for real or not. change it acc to your needs
 DEBUG = False
@@ -82,7 +83,7 @@ def config_loader(filename: str = "config.yaml") -> dict:
         )
         quit(1)
 
-    global CONNECTION_TYPE, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN, TIMEOUT
+    global CONNECTION_TYPE, NIGHT_PHASE, MORNING_PHASE, CHAT_ID, BOT_TOKEN, TIMEOUT, SLEEP_INTERVAL
     # try and load each of the important stuff
     # Wifi
     try:
@@ -154,6 +155,18 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Custom TIMEOUT({TIMEOUT} seconds) loaded...")
+
+    # load sleep_interval
+    try:
+        SLEEP_INTERVAL = config["sleep_interval"]
+        assert isinstance(SLEEP_INTERVAL, (int, float)), "sleep_interval is not an integer"
+    except KeyError:
+        logger.debug("no sleep_interval defined")
+    except AssertionError as e:
+        logger.exception(e)
+        quit(1)
+    else:
+        logger.info(f"Loaded sleep interval of: {SLEEP_INTERVAL} seconds")
 
     """
 8888888b.                                         88888888888 d8b                        
@@ -552,12 +565,24 @@ def suspend_thread_until(time: datetime.timedelta):
     if time_to_wake_up < datetime.timedelta(seconds=0):
         time_to_wake_up += datetime.timedelta(hours=24)
 
+    # time adjustments
+    if SLEEP_INTERVAL:
+        time_to_wake_up = min(time_to_wake_up, datetime.timedelta(seconds=SLEEP_INTERVAL))
+        time = get_current_time_delta() + time_to_wake_up
+
     logger.debug(
         "Sleeping the program until %s for duration %s...",
         repr_time_delta(time),
         str(time_to_wake_up),
     )
-    sleep(time_to_wake_up.total_seconds())
+    # if there's no SLEEP_INTERVAL key aka 0
+    if SLEEP_INTERVAL:
+        output = subprocess.check_output(
+            ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
+        )
+        logger.debug(output.decode())
+    else:
+        sleep(time_to_wake_up.total_seconds())
     # extra delay seconds
     sleep(1)
 
@@ -686,6 +711,7 @@ def wait_for_connectivity_to_change_to(
 if __name__ == "__main__":
     LAST_SLEEP_TIME = get_last_sleep_time()
     LAST_SLEEP_TIME_byProgram = datetime.datetime.min
+    _wake_up_message_sent = False
     debug = False
     # if debug:
     #     config_loader()
@@ -733,6 +759,7 @@ if __name__ == "__main__":
         # Check if we're in NIGHT PHASE
         if current_time_within_time_range(NIGHT_PHASE):
             logger.info(f"Computer is in {Fore.LIGHTMAGENTA_EX} night phase")
+            _wake_up_message_sent = False
             # In the night mode, check if we're nearing the end time, if yes then check *vigorously* for connectivity
             # changes
             if current_time_within_time_range(
@@ -800,19 +827,22 @@ if __name__ == "__main__":
                 LAST_SLEEP_TIME_byProgram = datetime.datetime.now()
                 sleep_computer_but_wake_at(MORNING_PHASE["start time"], debug=debug)
             elif nearest_phase[0] == "NIGHT PHASE":
-                logger.info(
-                    "MORNING PHASE's 'end time' has passed. Computer will be awake now and wait till %s.",
-                    repr_time_delta(NIGHT_PHASE["start time"]),
-                )
-                while True:
-                    try:
-                        alert_onTelegram(
-                            "Computer is awake, and internet is back up at this time.\nLast sleep time: "
-                            f"`{LAST_SLEEP_TIME.strftime('%b %d %H:%M:%S')}` "
-                        )
-                        break
-                    except requests.exceptions.ConnectionError:
-                        continue
+                if _wake_up_message_sent is False:
+                    _wake_up_message_sent = True
+
+                    logger.info(
+                        "MORNING PHASE's 'end time' has passed. Computer will be awake now and wait till %s.",
+                        repr_time_delta(NIGHT_PHASE["start time"]),
+                    )
+                    while True:
+                        try:
+                            alert_onTelegram(
+                                "Computer is awake, and internet is back up at this time.\nLast sleep time: "
+                                f"`{LAST_SLEEP_TIME.strftime('%b %d %H:%M:%S')}` "
+                            )
+                            break
+                        except requests.exceptions.ConnectionError:
+                            continue
                 suspend_thread_until(NIGHT_PHASE["start time"])
 
         # If the internet goes out early

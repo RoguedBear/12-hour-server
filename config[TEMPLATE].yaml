@@ -11,6 +11,11 @@ morning phase:
 
 # This timeout will be used to wait for internet to go out, and also to wait for internet to come back in
 timeout: 90
+
+# If this key is present, program's thread would periodically wake up, check phases again and set a backup wake timer
+# of this interval (or less).
+sleep_interval: 1800 # seconds
+
 logging level: 10 # 10 for DEBUG, 20 for INFO, 30 for WARNING, 40 for ERROR, 50 for CRITICAL logging level
 
 # Optional
