@@ -18,7 +18,7 @@ CONNECTION_TYPE: Literal["any", "wired", "wireless"] = "any"
 NIGHT_PHASE: dict = dict()
 MORNING_PHASE: dict = dict()
 TIMEOUT = 500
-SLEEP_INTERVAL = 0 # 0 means disabled
+SLEEP_INTERVAL = 0  # 0 means disabled
 
 # This controls whether the computer sleeps for real or not. change it acc to your needs
 DEBUG = False
@@ -159,7 +159,9 @@ def config_loader(filename: str = "config.yaml") -> dict:
     # load sleep_interval
     try:
         SLEEP_INTERVAL = config["sleep_interval"]
-        assert isinstance(SLEEP_INTERVAL, (int, float)), "sleep_interval is not an integer"
+        assert isinstance(
+            SLEEP_INTERVAL, (int, float)
+        ), "sleep_interval is not an integer"
     except KeyError:
         logger.debug("no sleep_interval defined")
     except AssertionError as e:
@@ -567,7 +569,9 @@ def suspend_thread_until(time: datetime.timedelta):
 
     # time adjustments
     if SLEEP_INTERVAL:
-        time_to_wake_up = min(time_to_wake_up, datetime.timedelta(seconds=SLEEP_INTERVAL))
+        time_to_wake_up = min(
+            time_to_wake_up, datetime.timedelta(seconds=SLEEP_INTERVAL)
+        )
         time = get_current_time_delta() + time_to_wake_up
 
     logger.debug(
