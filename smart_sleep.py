@@ -26,6 +26,7 @@ import requests
 import logging
 import subprocess
 from colorama import Fore
+from logging.handlers import TimedRotatingFileHandler
 from typing import Literal, Tuple, Dict
 
 # program constants
@@ -276,14 +277,16 @@ console = logging.StreamHandler()
 console.setFormatter(colors)
 
 # File logs uncolored
-file_logs_uncolored = logging.FileHandler("logs.log")
+file_logs_uncolored = TimedRotatingFileHandler(
+    "logs/logs.log", backupCount=7, when='midnight')
 uncolored_formatter = logging.Formatter(
     FORMATTER["format"].replace("{color}", ""), datefmt=FORMATTER["datefmt"], style="{"
 )
 file_logs_uncolored.setFormatter(uncolored_formatter)
 
 # File logs colored
-file_logs_colored = logging.FileHandler("logs_color.log")
+file_logs_colored = TimedRotatingFileHandler(
+    "logs/logs_color.log", backupCount=7, when='midnight')
 file_logs_colored.setFormatter(colors)
 
 # Adding those handlers
