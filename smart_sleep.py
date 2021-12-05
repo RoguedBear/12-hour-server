@@ -278,7 +278,8 @@ console.setFormatter(colors)
 
 # File logs uncolored
 file_logs_uncolored = TimedRotatingFileHandler(
-    "logs/logs.log", backupCount=7, when='midnight')
+    "logs/logs.log", backupCount=7, when="midnight"
+)
 uncolored_formatter = logging.Formatter(
     FORMATTER["format"].replace("{color}", ""), datefmt=FORMATTER["datefmt"], style="{"
 )
@@ -286,7 +287,8 @@ file_logs_uncolored.setFormatter(uncolored_formatter)
 
 # File logs colored
 file_logs_colored = TimedRotatingFileHandler(
-    "logs/logs_color.log", backupCount=7, when='midnight')
+    "logs/logs_color.log", backupCount=7, when="midnight"
+)
 file_logs_colored.setFormatter(colors)
 
 # Adding those handlers
