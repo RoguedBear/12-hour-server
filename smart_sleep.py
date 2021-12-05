@@ -1,6 +1,23 @@
 #!/usr/bin/sudo python3.8
-# TODO: add tails -f log.log or less -R +F log.log in the readme
-# TODO: add code style badge in README
+
+"""
+    12-hour-server/smart_sleep: a python script to put the home "server" to sleep when wifi is disconnected at night,
+                                and wake up early the next day
+    Copyright (C) 2021  Roguedbear
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 import datetime
 from time import sleep
 
@@ -21,7 +38,7 @@ TIMEOUT = 500
 SLEEP_INTERVAL = 0  # 0 means disabled
 
 # This controls whether the computer sleeps for real or not. change it acc to your needs
-DEBUG = False
+DEBUG = True
 # Logging formatter
 FORMATTER = {
     "format": "{color}[{asctime}] :--{levelname:-^9s}--: [{funcName}()] {message}",
@@ -713,6 +730,15 @@ def wait_for_connectivity_to_change_to(
 """
 
 if __name__ == "__main__":
+
+    print("""
+    12-hour-server/smart_sleep  Copyright (C) 2021  Roguedbear
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions
+    """)
+    sleep(2)
+
     LAST_SLEEP_TIME = get_last_sleep_time()
     LAST_SLEEP_TIME_byProgram = datetime.datetime.min
     _wake_up_message_sent = False
