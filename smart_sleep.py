@@ -419,7 +419,8 @@ def get_last_sleep_time() -> datetime.datetime:
         sleep_entry_entries = subprocess.check_output(
             'grep -E "PM: suspend entry" /var/log/syslog; exit 0', shell=True
         ).decode()
-    except subprocess.CalledProcessError:
+        assert len(sleep_entry_entries) != 0, "No last sleep time recorded"
+    except (subprocess.CalledProcessError, AssertionError):
         last_sleep_entry = datetime.datetime.min
     else:
         sleep_entry_entries = sleep_entry_entries.split("\n")[:-1]
@@ -537,7 +538,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
             ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
         )
     logger.debug(output.decode())
-    sleep(0.5)
+    sleep(2)
     logger.info('"Good Mawrning!" [read that in Tim Cook way] I am awake now.')
 
 
