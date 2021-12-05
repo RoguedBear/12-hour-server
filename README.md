@@ -56,8 +56,8 @@ This is what this program does.
 
 The program creates 2 log files. one containing the normal logs (`logs.log`), and the other containing the ANSI color codes (`logs_color.log`)
 If you want to see the logs of this program by ssh-ing into the server computer, then there are 2 ways for that:
-1) [To view logs with color] `less -R +F Path_to_repository_root/logs_color.log`
-2) [To view plain logs without color] `tail -f Path_to_repository_root/logs.log`
+1) [To view logs with color] `less -R +F Path_to_repository_root/logs/logs_color.log`
+2) [To view plain logs without color] `tail -f Path_to_repository_root/logs/logs.log`
 
 ## Reporting Issues:
 
