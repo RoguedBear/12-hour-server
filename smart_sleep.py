@@ -588,6 +588,7 @@ def suspend_thread_until(time: datetime.timedelta):
     :param time: the time to wake the thread
     :return: None
     """
+
     def __sleep_or_rtc_wake(time_s: datetime.timedelta):
         """based on SLEEP_INTERVAL decides if it should use rtcwake or python sleep"""
         logger.debug(
@@ -602,22 +603,28 @@ def suspend_thread_until(time: datetime.timedelta):
             sleep(time_s.seconds)
         else:
             output = subprocess.check_output(
-                    ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_s.seconds)]
-                )
+                ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_s.seconds)]
+            )
             logger.debug(output.decode())
 
     # convert timedelta to datetime
     wakeup_date = datetime.date.today()
-    if time <= get_current_time_delta():  # if time is less, then assume wakeup is tomorrow
+    if (
+        time <= get_current_time_delta()
+    ):  # if time is less, then assume wakeup is tomorrow
         wakeup_date += datetime.timedelta(days=1)
 
     time_to_wakeup = datetime.datetime.combine(wakeup_date, datetime.time.min) + time
 
-    logger.info("Sleeping thread till: %s", time_to_wakeup.strftime("%d/%b/%Y %H:%M:%S"))
+    logger.info(
+        "Sleeping thread till: %s", time_to_wakeup.strftime("%d/%b/%Y %H:%M:%S")
+    )
     # the sleep loop
     _one_timedelta = datetime.timedelta(seconds=1)
     _sleep_interval_timedelta = datetime.timedelta(seconds=SLEEP_INTERVAL)
-    while _one_timedelta < (remaining_sleep_time := time_to_wakeup - datetime.datetime.now()):
+    while _one_timedelta < (
+        remaining_sleep_time := time_to_wakeup - datetime.datetime.now()
+    ):
         # if sleep interval is defined use that, else use logarithmic time inspired by jgillick/python-pause
         if SLEEP_INTERVAL:
             __sleep_or_rtc_wake(min(remaining_sleep_time, _sleep_interval_timedelta))
