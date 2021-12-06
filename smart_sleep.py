@@ -39,7 +39,7 @@ TIMEOUT = 500
 SLEEP_INTERVAL = 0  # 0 means disabled
 
 # This controls whether the computer sleeps for real or not. change it acc to your needs
-DEBUG = True
+DEBUG = False
 # Logging formatter
 FORMATTER = {
     "format": "{color}[{asctime}] :--{levelname:-^9s}--: [{funcName}()] {message}",
