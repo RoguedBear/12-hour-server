@@ -571,6 +571,7 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
             ["sudo", "rtcwake", "-m", "mem", "-s", str(time_to_wake_up.seconds)]
         )
     else:
+        logger.info("DEBUG enabled, dry-running rtcwake")
         output = subprocess.check_output(
             ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
         )
@@ -582,33 +583,48 @@ def sleep_computer_but_wake_at(time: datetime.timedelta, debug: bool = False):
 def suspend_thread_until(time: datetime.timedelta):
     """
     suspends the current thread until the `time` time reaches using time.sleep()
+    If `time` is greater than current time, assumes that `time` happens on same day.
+    If `time` is lesser than current time, assumes that `time` happens on next day
     :param time: the time to wake the thread
     :return: None
     """
-    time_to_wake_up = time - get_current_time_delta()
-    if time_to_wake_up < datetime.timedelta(seconds=0):
-        time_to_wake_up += datetime.timedelta(hours=24)
-
-    # time adjustments
-    if SLEEP_INTERVAL:
-        time_to_wake_up = min(
-            time_to_wake_up, datetime.timedelta(seconds=SLEEP_INTERVAL)
+    def __sleep_or_rtc_wake(time_s: datetime.timedelta):
+        """based on SLEEP_INTERVAL decides if it should use rtcwake or python sleep"""
+        logger.debug(
+            "Sleeping the program until %s for duration %s...",
+            (datetime.datetime.now() + time_s).strftime("%d/%b/%Y %H:%M:%S"),
+            str(time_s),
         )
-        time = get_current_time_delta() + time_to_wake_up
+        if time_s.seconds <= 0:
+            return
 
-    logger.debug(
-        "Sleeping the program until %s for duration %s...",
-        repr_time_delta(time),
-        str(time_to_wake_up),
-    )
-    # if there's no SLEEP_INTERVAL key aka 0
-    if SLEEP_INTERVAL:
-        output = subprocess.check_output(
-            ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_to_wake_up.seconds)]
-        )
-        logger.debug(output.decode())
-    else:
-        sleep(time_to_wake_up.total_seconds())
+        if bool(SLEEP_INTERVAL) is False:  # bool(x) because `0 is False` is false. TIL
+            sleep(time_s.seconds)
+        else:
+            output = subprocess.check_output(
+                    ["sudo", "-s", "rtcwake", "-m", "on", "-s", str(time_s.seconds)]
+                )
+            logger.debug(output.decode())
+
+    # convert timedelta to datetime
+    wakeup_date = datetime.date.today()
+    if time <= get_current_time_delta():  # if time is less, then assume wakeup is tomorrow
+        wakeup_date += datetime.timedelta(days=1)
+
+    time_to_wakeup = datetime.datetime.combine(wakeup_date, datetime.time.min) + time
+
+    logger.info("Sleeping thread till: %s", time_to_wakeup.strftime("%d/%b/%Y %H:%M:%S"))
+    # the sleep loop
+    _one_timedelta = datetime.timedelta(seconds=1)
+    _sleep_interval_timedelta = datetime.timedelta(seconds=SLEEP_INTERVAL)
+    while _one_timedelta < (remaining_sleep_time := time_to_wakeup - datetime.datetime.now()):
+        # if sleep interval is defined use that, else use logarithmic time inspired by jgillick/python-pause
+        if SLEEP_INTERVAL:
+            __sleep_or_rtc_wake(min(remaining_sleep_time, _sleep_interval_timedelta))
+        else:
+            __sleep_or_rtc_wake(max(_one_timedelta, remaining_sleep_time / 2))
+
+    logger.debug("exit")
     # extra delay seconds
     sleep(1)
 
