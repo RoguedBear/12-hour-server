@@ -172,16 +172,19 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.exception(e)
         quit(1)
     else:
-        logger.warning(f"Custom TIMEOUT({TIMEOUT} seconds) has been loaded, but prefer adding `timeout` inside the "
-                       "morning & night phase key in future. Refer config[TEMPLATE].yaml for reference. "
-                       "\n This key is will only change the default timeout. warning will be removed in a future "
-                       "release")
+        logger.warning(
+            f"Custom TIMEOUT({TIMEOUT} seconds) has been loaded, but prefer adding `timeout` inside the "
+            "morning & night phase key in future. Refer config[TEMPLATE].yaml for reference. "
+            "\n This key is will only change the default timeout. warning will be removed in a future "
+            "release"
+        )
     # if morning or night timeouts are detected
     for phase_name in ["morning phase", "night phase"]:
         try:
             __phase_timeout = config[phase_name]["timeout"]
-            assert isinstance(__phase_timeout, int), \
-                f"expected integer for {phase_name} got: {type(__phase_timeout)} \t {__phase_timeout}"
+            assert isinstance(
+                __phase_timeout, int
+            ), f"expected integer for {phase_name} got: {type(__phase_timeout)} \t {__phase_timeout}"
         except KeyError:
             logger.debug(f"{phase_name} timeout not found, using default")
             config[phase_name]["timeout"] = TIMEOUT
@@ -189,7 +192,11 @@ def config_loader(filename: str = "config.yaml") -> dict:
             logger.exception(e)
             quit(1)
         finally:
-            logger.info("%s timeout loaded... %d seconds", phase_name, config[phase_name]["timeout"])
+            logger.info(
+                "%s timeout loaded... %d seconds",
+                phase_name,
+                config[phase_name]["timeout"],
+            )
 
     # load sleep_interval
     try:
@@ -860,8 +867,9 @@ if __name__ == "__main__":
                     "disconnected",
                     "suspend",
                     NIGHT_PHASE["start time"],
-                    NIGHT_PHASE["end time"] - datetime.timedelta(seconds=NIGHT_PHASE["timeout"]),
-                    NIGHT_PHASE["timeout"]
+                    NIGHT_PHASE["end time"]
+                    - datetime.timedelta(seconds=NIGHT_PHASE["timeout"]),
+                    NIGHT_PHASE["timeout"],
                 )
 
         # Check if we're in MORNING PHASE now
@@ -888,8 +896,9 @@ if __name__ == "__main__":
                     "connected",
                     "sleep",
                     MORNING_PHASE["start time"],
-                    MORNING_PHASE["end time"] - datetime.timedelta(seconds=MORNING_PHASE["timeout"]),
-                    MORNING_PHASE["timeout"]
+                    MORNING_PHASE["end time"]
+                    - datetime.timedelta(seconds=MORNING_PHASE["timeout"]),
+                    MORNING_PHASE["timeout"],
                 )
 
         # here we see which phase is the nearest to us and take actions accordingly
