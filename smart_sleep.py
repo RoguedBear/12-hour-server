@@ -27,7 +27,7 @@ import logging
 import subprocess
 from colorama import Fore
 from logging.handlers import TimedRotatingFileHandler
-from typing import Literal, Tuple, Dict
+from typing import Literal, Tuple, Dict, List
 
 # program constants
 CHAT_ID = ""
@@ -39,7 +39,7 @@ TIMEOUT = 500
 SLEEP_INTERVAL = 0  # 0 means disabled
 
 # This controls whether the computer sleeps for real or not. change it acc to your needs
-DEBUG = False
+DEBUG = True
 # Logging formatter
 FORMATTER = {
     "format": "{color}[{asctime}] :--{levelname:-^9s}--: [{funcName}()] {message}",
@@ -172,7 +172,24 @@ def config_loader(filename: str = "config.yaml") -> dict:
         logger.exception(e)
         quit(1)
     else:
-        logger.info(f"Custom TIMEOUT({TIMEOUT} seconds) loaded...")
+        logger.warning(f"Custom TIMEOUT({TIMEOUT} seconds) has been loaded, but prefer adding `timeout` inside the "
+                       "morning & night phase key in future. Refer config[TEMPLATE].yaml for reference. "
+                       "\n This key is will only change the default timeout. warning will be removed in a future "
+                       "release")
+    # if morning or night timeouts are detected
+    for phase_name in ["morning phase", "night phase"]:
+        try:
+            __phase_timeout = config[phase_name]["timeout"]
+            assert isinstance(__phase_timeout, int), \
+                f"expected integer for {phase_name} got: {type(__phase_timeout)} \t {__phase_timeout}"
+        except KeyError:
+            logger.debug(f"{phase_name} timeout not found, using default")
+            config[phase_name]["timeout"] = TIMEOUT
+        except AssertionError as e:
+            logger.exception(e)
+            quit(1)
+        finally:
+            logger.info("%s timeout loaded... %d seconds", phase_name, config[phase_name]["timeout"])
 
     # load sleep_interval
     try:
@@ -525,7 +542,7 @@ def check_connected_to_internetV2(
     logger.debug(f"wired devices found ({len(wired)}): {wired}")
     logger.debug(f"wireless devices found ({len(wireless)}): {wireless}")
     CONNECTED_TO_INTERNET = False
-    DEVICE_CONNECTED = []
+    DEVICE_CONNECTED: List[str] = []
 
     devices = {"wired": wired, "wireless": wireless, "any": wired + wireless}
 
@@ -792,17 +809,17 @@ if __name__ == "__main__":
     *check if we are in the night phase or morning phase.
     -NIGHT PHASE
     * check if internet is still connected
-    * if yes. no problem. check again in TIMEOUT seconds.
+    * if yes. no problem. check again in night_phase->timeout seconds.
     * if internet is not there, wait 5-10 minute (or WIFI_Wait).
         * if internet still not there, sleep until morning phase
-    * if we're within ~TIMEOUT seconds of `end time` of the NIGHT PHASE, go to sleep
+    * if we're within ~night phase->timeout seconds of `end time` of the NIGHT PHASE, go to sleep
     
     - MORNING PHASE
     * wakey wakey and see if internet is connected. after waiting 60 seconds giving the computer oppurtunity to connect
-    * if internet not there, sleep and check again in TIMEOUT seconds
+    * if internet not there, sleep and check again in morning phase->timeout seconds
     * if internet there no problem. awake, sleep until NighPhase
-    * if we're within ~TIMEOUT seconds of `end time` of morning phase, we'll go awake and sleep the thread until 
-       NIGHTPHASE arrives
+    * if we're within ~morning-phase->timeout seconds of `end time` of morning phase, we'll go awake and sleep the 
+        thread until NIGHT PHASE arrives
     
     - NEITHER
     * if we're in neither phase (possibly cuz you ran the program at your own will), suspend the thread if nearest is 
@@ -825,7 +842,7 @@ if __name__ == "__main__":
             if current_time_within_time_range(
                 {
                     "start time": NIGHT_PHASE["end time"]
-                    - datetime.timedelta(seconds=TIMEOUT),
+                    - datetime.timedelta(seconds=NIGHT_PHASE["timeout"]),
                     "end time": NIGHT_PHASE["end time"],
                 }
             ):
@@ -834,7 +851,7 @@ if __name__ == "__main__":
                     "suspend",
                     NIGHT_PHASE["start time"],
                     NIGHT_PHASE["end time"],
-                    60,
+                    5,
                 )
 
             # Otherwise passively check for connectivity changes till
@@ -843,7 +860,8 @@ if __name__ == "__main__":
                     "disconnected",
                     "suspend",
                     NIGHT_PHASE["start time"],
-                    NIGHT_PHASE["end time"] - datetime.timedelta(seconds=TIMEOUT),
+                    NIGHT_PHASE["end time"] - datetime.timedelta(seconds=NIGHT_PHASE["timeout"]),
+                    NIGHT_PHASE["timeout"]
                 )
 
         # Check if we're in MORNING PHASE now
@@ -854,7 +872,7 @@ if __name__ == "__main__":
             if current_time_within_time_range(
                 {
                     "start time": MORNING_PHASE["end time"]
-                    - datetime.timedelta(seconds=TIMEOUT),
+                    - datetime.timedelta(seconds=MORNING_PHASE["timeout"]),
                     "end time": MORNING_PHASE["end time"],
                 }
             ):
@@ -870,7 +888,8 @@ if __name__ == "__main__":
                     "connected",
                     "sleep",
                     MORNING_PHASE["start time"],
-                    MORNING_PHASE["end time"] - datetime.timedelta(seconds=TIMEOUT),
+                    MORNING_PHASE["end time"] - datetime.timedelta(seconds=MORNING_PHASE["timeout"]),
+                    MORNING_PHASE["timeout"]
                 )
 
         # here we see which phase is the nearest to us and take actions accordingly

@@ -5,11 +5,15 @@ connection type: any
 night phase:
   start time: 23:20
   end time: 23:40
+  # this timeout will be used as the frequency to check internet connectivity
+  timeout: 7 # seconds
 morning phase:
   start time: 8:30
   end time: 10:30
+  # this timeout will be used as the frequency to check internet connectivity
+  timeout: 300 # seconds
 
-# This timeout will be used to wait for internet to go out, and also to wait for internet to come back in
+# This timeout will be used to change the default timeout.
 timeout: 90
 
 # If this key is present, program's thread would periodically wake up, check phases again and set a backup wake timer
