@@ -28,7 +28,7 @@ import logging
 import subprocess
 from colorama import Fore
 from logging.handlers import TimedRotatingFileHandler
-from typing import Literal, Tuple, Dict, List
+from typing import Literal, Tuple, Dict, List, Callable
 
 # program constants
 CHAT_ID = ""
@@ -212,6 +212,20 @@ def config_loader(filename: str = "config.yaml") -> dict:
         quit(1)
     else:
         logger.info(f"Loaded sleep interval of: {SLEEP_INTERVAL} seconds")
+
+    # load connectivity method
+    try:
+        if "connectivity_method" in config:
+            method = config["connectivity_method"]
+            assert method in ["v2", "v3", "v2+v3"], \
+                f"`connectivity_method` should be one of 'v2'/'v3'/'v2+v3'. got: {method}"
+        else:
+            config["connectivity_method"] = "v2"
+    except AssertionError as e:
+        logger.exception(e)
+        quit(1)
+    else:
+        logger.info("Using connectivity method... %s", config["connectivity_method"])
 
     """
 8888888b.                                         88888888888 d8b                        
@@ -590,15 +604,16 @@ def check_connected_to_internetV3(
         :param ip: the ip address. correctness of ip check is not performed
         :return: True/False if ping was successful or failed
         """
+        _ping_output = ""
         try:
-            output = subprocess.check_output(
+            _ping_output = subprocess.check_output(
                 ["ping", "-c", "1", ip]
             ).decode()
-            assert "1 received" in output, "Ping 'successful', but packet not received"
+            assert "1 received" in _ping_output, "Ping 'successful', but packet not received"
         except subprocess.CalledProcessError:
             return False
         except AssertionError:
-            logger.error("ping output: %s", output, exc_info=True)
+            logger.error("ping output: %s", _ping_output, exc_info=True)
             return False
         else:
             return True
@@ -617,9 +632,11 @@ def check_connected_to_internetV3(
     to_check = []
 
     if connection_type == "any":
-        to_check.append(gateways["default"][netifaces.AF_INET])  # AF_INET is ipv4 addresses
+        if netifaces.AF_INET in gateways["default"]:
+            to_check.append(gateways["default"][netifaces.AF_INET])  # AF_INET is ipv4 addresses
     elif connection_type in ["wired", "wireless"]:
-        to_check.append(*gateways[netifaces.AF_INET])
+        if netifaces.AF_INET in gateways:
+            to_check.append(*gateways[netifaces.AF_INET])
     else:
         raise ValueError(f"parameter connection_type expected one of wired/wireless/any, got: \"{connection_type}\"")
 
@@ -652,6 +669,39 @@ def check_connected_to_internetV3(
         )
 
     return _CONNECTED_TO_INTERNET, tuple(_DEVICES_CONNECTED)
+
+
+def check_connected_to_internetV2V3(
+    connection_type: Literal["any", "wired", "wireless"] = "any"
+) -> Tuple[bool, Tuple[str, ...]]:
+    """
+    uses v2 and v3 connectivity functions.
+    :param connection_type: the type of device to check whether connected to internet or not.
+                            scans for any device by default
+    :return: boolean and a tuple of devices that were detected to be connected
+    """
+    v2 = check_connected_to_internetV2(connection_type)
+    if v2[0]:
+        v3 = check_connected_to_internetV3(connection_type)
+        return v3[0], v2[1] + v3[1]
+    else:
+        return v2
+
+
+def connectivity_function_factory(
+        version: Literal["v2", "v3", "v2+v3"] = "v2"
+) -> Callable[[Literal["any", "wired", "wireless"]], Tuple[bool, Tuple[str, ...]]]:
+    """
+    returns the right method based on version requirements
+    :param version: the version of connectivity method to use
+    :return: the method to use
+    """
+    methods = {
+        "v2": check_connected_to_internetV2,
+        "v3": check_connected_to_internetV3,
+        "v2+v3": check_connected_to_internetV2V3
+    }
+    return methods[version]
 
 
 # noinspection PyShadowingNames
@@ -806,6 +856,7 @@ def wait_for_connectivity_to_change_to(
     start_time: datetime.timedelta,
     end_time: datetime.timedelta,
     timeout: int = -1,
+    use_v2: Literal["v2", "v3", "v2+v3"] = "v2"
 ) -> bool:
     """
     This function is partly big brain logic.
@@ -822,6 +873,7 @@ def wait_for_connectivity_to_change_to(
     :param start_time: the starting time of the current phase
     :param end_time: the time till the function should check for connection changes
     :param timeout: *Optional. -1 by default to use the default TIMEOUT. otherwise specify timeout
+    :param use_v2: *Optional. which connectivity function to use. uses v2 by default
     :return: True/False if connection changed to what was asked
     """
     # convert connection types to a boolean dictionary
@@ -833,9 +885,12 @@ def wait_for_connectivity_to_change_to(
         "start time": start_time,
         "end time": end_time,
     }
+    # the connectivity check function to use
+    connectivity_method = connectivity_function_factory(use_v2)
+
     while current_time_within_time_range(phase):
         # We check now the status of internet connection.
-        status, _ = check_connected_to_internetV2(CONNECTION_TYPE)
+        status, _ = connectivity_method(CONNECTION_TYPE)
 
         # Now check if the internet status is the same as required status' boolean value
         if status == con_val[req_connection_status]:
@@ -919,6 +974,7 @@ if __name__ == "__main__":
     config_data = config_loader()
     logging_level = config_data.get("logging level", 10)
     logger.setLevel(logging_level)
+    connectivity_method = config_data["connectivity_method"]
     # Alright, let's start.
     while True:
         go_to_sleep = False
@@ -943,6 +999,7 @@ if __name__ == "__main__":
                     NIGHT_PHASE["start time"],
                     NIGHT_PHASE["end time"],
                     5,
+                    connectivity_method
                 )
 
             # Otherwise passively check for connectivity changes till
@@ -954,6 +1011,7 @@ if __name__ == "__main__":
                     NIGHT_PHASE["end time"]
                     - datetime.timedelta(seconds=NIGHT_PHASE["timeout"]),
                     NIGHT_PHASE["timeout"],
+                    connectivity_method
                 )
 
         # Check if we're in MORNING PHASE now
@@ -974,6 +1032,7 @@ if __name__ == "__main__":
                     MORNING_PHASE["start time"],
                     MORNING_PHASE["end time"],
                     60,
+                    connectivity_method
                 )
             else:
                 be_awake = wait_for_connectivity_to_change_to(
@@ -983,6 +1042,7 @@ if __name__ == "__main__":
                     MORNING_PHASE["end time"]
                     - datetime.timedelta(seconds=MORNING_PHASE["timeout"]),
                     MORNING_PHASE["timeout"],
+                    connectivity_method
                 )
 
         # here we see which phase is the nearest to us and take actions accordingly
