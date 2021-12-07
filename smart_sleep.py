@@ -22,6 +22,7 @@ import datetime
 from time import sleep
 
 import colorama
+import netifaces
 import requests
 import logging
 import subprocess
@@ -568,6 +569,89 @@ def check_connected_to_internetV2(
         )
 
     return CONNECTED_TO_INTERNET, tuple(DEVICE_CONNECTED)
+
+
+def check_connected_to_internetV3(
+        connection_type: Literal["any", "wired", "wireless"] = "any"
+) -> Tuple[bool, Tuple[str]]:
+    """
+    Checks for internet connectivity by pinging the default gateway.
+    any -> pings the default gateway
+    wired -> same as `any`, but checks in AF_LINK gateways
+    (PS: i dunno if practically there could be 2 default gateways, so i just made the method assuming there could be
+     multiple gateways that work)
+    :param connection_type: any/wired/wireless; which connection device to check
+    :return: (bool, str) ; if device is connected and the connected device's name
+    """
+
+    def ping(ip: str) -> bool:
+        """
+        Pings the given ip and returns boolean value on success or fail
+        :param ip: the ip address. correctness of ip check is not performed
+        :return: True/False if ping was successful or failed
+        """
+        try:
+            output = subprocess.check_output(
+                ["ping", "-c", "1", ip]
+            ).decode()
+            assert "1 received" in output, "Ping 'successful', but packet not received"
+        except subprocess.CalledProcessError:
+            return False
+        except AssertionError:
+            logger.error("ping output: %s", output, exc_info=True)
+            return False
+        else:
+            return True
+
+    """
+    Pseudocode:
+        * pick a device: default/AF_LINK/AF_INET (else: valuerror)
+        * default: ping the ip
+        * else: 
+            * iterate through the list, if name starts with w/e ping it
+    """
+    _CONNECTED_TO_INTERNET = False
+    _DEVICES_CONNECTED: List[str] = []
+
+    gateways = netifaces.gateways()
+    to_check = []
+
+    if connection_type == "any":
+        to_check.append(gateways["default"][netifaces.AF_INET])  # AF_INET is ipv4 addresses
+    elif connection_type in ["wired", "wireless"]:
+        to_check.append(*gateways[netifaces.AF_INET])
+    else:
+        raise ValueError(f"parameter connection_type expected one of wired/wireless/any, got: \"{connection_type}\"")
+
+    logger.debug("gateways found: %s", gateways)
+    logger.debug("devices to check: %s", to_check)
+    for gateway in to_check:
+        # only ping if:
+        #   - connection  == any
+        #       OR
+        #   - gateway[0] == w && connection == wireless
+        #       OR
+        #   - gateway[0] == e && connection == wired
+        if (
+                (connection_type == "any") or
+                (connection_type == "wireless" and gateway[1][0] == 'w') or
+                (connection_type == "wired" and gateway[1][0] == 'e')
+        ):
+            logger.debug("Testing device... " + Fore.CYAN + gateway[1])
+            output = ping(gateway[0])
+            if output is True:
+                _CONNECTED_TO_INTERNET = True
+                _DEVICES_CONNECTED.append(gateway[1])
+                logger.debug(
+                    f"Device: {Fore.CYAN + gateway[1] + Fore.WHITE} is connected to internet"
+                )
+    if _CONNECTED_TO_INTERNET is False:
+        logger.debug(
+            "No device connected to internet. Computer is currently %sOFFLINE",
+            Fore.YELLOW,
+        )
+
+    return _CONNECTED_TO_INTERNET, tuple(_DEVICES_CONNECTED)
 
 
 # noinspection PyShadowingNames
