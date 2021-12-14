@@ -641,7 +641,7 @@ def check_connected_to_internetV3(
             )  # AF_INET is ipv4 addresses
     elif connection_type in ["wired", "wireless"]:
         if netifaces.AF_INET in gateways:
-            to_check.append(*gateways[netifaces.AF_INET])
+            to_check.extend(gateways[netifaces.AF_INET])
     else:
         raise ValueError(
             f'parameter connection_type expected one of wired/wireless/any, got: "{connection_type}"'
