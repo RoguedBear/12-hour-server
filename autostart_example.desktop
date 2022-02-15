@@ -1,0 +1,15 @@
+# my personal backup/copy of autostart file I use to start the script on computer startup.
+# assumes:
+#     - smart_sleep.py is in sudoers file and allowed to run as root w/o password.
+#     - you have the proper permissions set up in place (preventing writes,
+#       marking file as immutable, file owner is root)
+#     - you know what are doing.
+# note: do not edit sudoers unless you ABSOLUTELY KNOW WHAT YOU ARE DOING
+[Desktop Entry]
+Type=Application
+Exec=bash -c "cd Github/12-hour-server && gnome-terminal --geometry=150x24 --  bash -c 'sudo ./smart_sleep.py 2>&1 | tee tee_log.log'"
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=12-hour-server script
+Comment=run the smart sleep script in a terminal gui
