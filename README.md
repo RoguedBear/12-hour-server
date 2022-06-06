@@ -6,7 +6,7 @@
 
 > a python script to put the home "server" to sleep when wifi is disconnected at night, and wake up early the next day
 
-Note: This script will only run on Linux (more specifically on Ubuntu/Debian). **WILL NOT RUN ON WINDOWS**
+Note: This script will only run on Linux (more specifically, tested on Ubuntu/Debian). **WILL NOT RUN ON WINDOWS**
 
 ## What does this script do?
 
@@ -98,6 +98,8 @@ main router is still up or not.
 You'd be fine with using `connectivity_method` as `v2` as long as the device connects to the main router. Or, you can
 switch to using the ping method by setting `connectivity_method` to `v3` if you want that. at the time of writing,
 haven't put the ping method to much irl use and the v2 method works just as fine.
+
+**update:** 6 months in running the script on a daily basis, v3 works flawlessly. so you can use any.
 
 ## Known issue:
 
