@@ -1081,6 +1081,7 @@ if __name__ == "__main__":
                             )
                             break
                         except requests.exceptions.ConnectionError:
+                            sleep(5)
                             continue
                 suspend_thread_until(NIGHT_PHASE["start time"])
 
@@ -1116,5 +1117,6 @@ if __name__ == "__main__":
                     )
                     break
                 except Exception:
+                    sleep(5)
                     continue
             suspend_thread_until(NIGHT_PHASE["start time"])
