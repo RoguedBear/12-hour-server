@@ -3,7 +3,7 @@
 """
     12-hour-server/smart_sleep: a python script to put the home "server" to sleep when wifi is disconnected at night,
                                 and wake up early the next day
-    Copyright (C) 2021  Roguedbear
+    Copyright (C) 2021-22  Roguedbear
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -931,7 +931,7 @@ if __name__ == "__main__":
 
     print(
         """
-    12-hour-server/smart_sleep  Copyright (C) 2021  Roguedbear
+    12-hour-server/smart_sleep  Copyright (C) 2021-22  Roguedbear
     This program comes with ABSOLUTELY NO WARRANTY.
     This is free software, and you are welcome to redistribute it
     under certain conditions
