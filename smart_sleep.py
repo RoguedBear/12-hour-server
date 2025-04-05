@@ -500,14 +500,34 @@ def get_last_sleep_time() -> datetime.datetime:
         ).decode()
         assert len(sleep_entry_entries) != 0, "No last sleep time recorded"
     except (subprocess.CalledProcessError, AssertionError):
-        last_sleep_entry = datetime.datetime.min
+        return datetime.datetime.min
+
+    sleep_entry_entries = sleep_entry_entries.split("\n")[:-1]
+    last_sleep_entry = sleep_entry_entries[-1].split()
+    month_date_time = " ".join(last_sleep_entry[0:3])
+
+    try:
+        last_sleep_entry_time = datetime.datetime.strptime(
+            month_date_time, "%b %d %H:%M:%S"
+        )
+        last_sleep_entry_time = last_sleep_entry_time.replace(
+            year=datetime.date.today().year
+        )
+    except ValueError:
+        pass
     else:
-        sleep_entry_entries = sleep_entry_entries.split("\n")[:-1]
-        last_sleep_entry = sleep_entry_entries[-1].split()
-        month_date_time = " ".join(last_sleep_entry[0:3])
-        last_sleep_entry = datetime.datetime.strptime(month_date_time, "%b %d %H:%M:%S")
-        last_sleep_entry.replace(year=datetime.date.today().year)
-    return last_sleep_entry
+        return last_sleep_entry_time
+
+    try:
+        last_sleep_entry_time = datetime.datetime.fromisoformat(last_sleep_entry[0])
+    except ValueError:
+        pass
+    else:
+        return last_sleep_entry_time
+
+    logger.warning("found sleep entry in syslog, but unable to parse time")
+
+    return datetime.datetime.min
 
 
 def connected_to_wifi(ssid: str) -> bool:
