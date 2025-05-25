@@ -1,22 +1,22 @@
 #!/usr/bin/sudo python3.8
 
 """
-    12-hour-server/smart_sleep: a python script to put the home "server" to sleep when wifi is disconnected at night,
-                                and wake up early the next day
-    Copyright (C) 2021-22  Roguedbear
+12-hour-server/smart_sleep: a python script to put the home "server" to sleep when wifi is disconnected at night,
+                            and wake up early the next day
+Copyright (C) 2021-22  Roguedbear
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import datetime
 from time import sleep
@@ -543,7 +543,7 @@ def connected_to_wifi(ssid: str) -> bool:
 
 
 def check_connected_to_internetV2(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any",
 ) -> Tuple[bool, Tuple[str]]:
     """
     check's internet connectivity based on system's reporting.
@@ -609,7 +609,7 @@ def check_connected_to_internetV2(
 
 
 def check_connected_to_internetV3(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any",
 ) -> Tuple[bool, Tuple[str]]:
     """
     Checks for internet connectivity by pinging the default gateway.
@@ -699,7 +699,7 @@ def check_connected_to_internetV3(
 
 
 def check_connected_to_internetV2V3(
-    connection_type: Literal["any", "wired", "wireless"] = "any"
+    connection_type: Literal["any", "wired", "wireless"] = "any",
 ) -> Tuple[bool, Tuple[str, ...]]:
     """
     uses v2 and v3 connectivity functions.
@@ -716,7 +716,7 @@ def check_connected_to_internetV2V3(
 
 
 def connectivity_function_factory(
-    version: Literal["v2", "v3", "v2+v3"] = "v2"
+    version: Literal["v2", "v3", "v2+v3"] = "v2",
 ) -> Callable[[Literal["any", "wired", "wireless"]], Tuple[bool, Tuple[str, ...]]]:
     """
     returns the right method based on version requirements
