@@ -1,5 +1,6 @@
 services:
   12-hour-server:
+    container_name: 12-hour-server
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -7,6 +8,7 @@ services:
     privileged: true # needed to make rtcwake work without headaches
     network_mode: host # we need access to host's network adapters
     stop_grace_period: 0s
+    restart: unless-stopped
     volumes:
       # - /usr/bin/rtcwake:/usr/sbin/rtcwake:ro
       - /dev/rtc:/dev/rtc:ro
@@ -16,6 +18,4 @@ services:
       - /var/log/syslog:/var/log/syslog:ro
 
       - ./config.yaml:/12-hour-server/config.yaml:ro
-    # entrypoint: ["rtcwake", "-m", "mem", "-s", "20", "-v"]
-    entrypoint:
-      # ["python3", "-c", "import netifaces; print(netifaces.gateways())"]
+      - ./logs:/12-hour-server/logs:rw
