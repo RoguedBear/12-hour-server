@@ -1,0 +1,21 @@
+services:
+  12-hour-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ghcr.io/roguedbear/12-hour-server
+    privileged: true # needed to make rtcwake work without headaches
+    network_mode: host # we need access to host's network adapters
+    stop_grace_period: 0s
+    volumes:
+      # - /usr/bin/rtcwake:/usr/sbin/rtcwake:ro
+      - /dev/rtc:/dev/rtc:ro
+      - /dev/rtc0:/dev/rtc0:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /sys/class/net:/sys/class/net:ro
+      - /var/log/syslog:/var/log/syslog:ro
+
+      - ./config.yaml:/12-hour-server/config.yaml:ro
+    # entrypoint: ["rtcwake", "-m", "mem", "-s", "20", "-v"]
+    entrypoint:
+      # ["python3", "-c", "import netifaces; print(netifaces.gateways())"]
